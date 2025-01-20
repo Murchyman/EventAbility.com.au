@@ -1,0 +1,55 @@
+---
+import LocalFont from "../generic/LocalFont.astro";
+
+interface Props {
+  title: string;
+  description: string;
+  ogImage?: URL;
+}
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+
+// Set default OG image if none provided
+const defaultOgImage = new URL("/v1/generate/og/default.png", Astro.url);
+const { title, description, ogImage = defaultOgImage } = Astro.props;
+---
+
+<head>
+  <LocalFont />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="generator" content={Astro.generator} />
+  <meta name="title" content={`Social Spot | ${title}`} />
+  <meta name="description" content={description} />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content={canonicalURL} />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:image" content={ogImage} />
+  <meta property="og:site_name" content="Social Spot" />
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content={canonicalURL} />
+  <meta property="twitter:title" content={title} />
+  <meta property="twitter:description" content={description} />
+  <meta property="twitter:image" content={ogImage} />
+  <link rel="canonical" href={canonicalURL} />
+  <link rel="icon" type="image/ico" href="/favicon.ico" />
+  <title>Social Spot | {title}</title>
+  <!-- Google tag (gtag.js) -->
+  <script
+    is:inline
+    type="text/partytown"
+    src="https://www.googletagmanager.com/gtag/js?id=G-D3MG6QXLEF"></script>
+
+  <script is:inline type="text/partytown">
+    window.dataLayer = window.dataLayer || [];
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+    gtag("js", new Date());
+
+    gtag("config", "G-D3MG6QXLEF");
+  </script>
+
+  <slot />
+</head>

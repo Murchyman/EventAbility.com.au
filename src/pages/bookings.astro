@@ -1,0 +1,99 @@
+---
+import Layout from "@layouts/Default.astro";
+import EventSegment from "@components/events/EventSegment.astro";
+import { turso } from "src/lib/turso";
+
+// Redirect if not logged in
+if (!Astro.locals.user) {
+  return Astro.redirect(
+    "/signin?redirect=" + encodeURIComponent(Astro.url.pathname),
+  );
+}
+
+// Fetch user's registered events
+const registeredEvents = await turso.execute({
+  sql: `
+    SELECT e.*, ep.joined_at, 
+    CASE WHEN ep.user_id IS NOT NULL THEN true ELSE false END AS is_participating
+    FROM events e 
+    INNER JOIN event_participants ep ON e.event_id = ep.event_id 
+    WHERE ep.user_id = ?
+    ORDER BY e.start_time DESC
+  `,
+  args: [Astro.locals.user.id],
+});
+
+// Format the events
+const events = registeredEvents.rows.map((row) => {
+  return registeredEvents.columns.reduce((obj: any, column, index) => {
+    obj[column] = row[index];
+    return obj;
+  }, {});
+});
+
+// Helper function to convert date to event's timezone
+function getDateInTimezone(date: Date, timezone: string): Date {
+  return new Date(date.toLocaleString("en-US", { timeZone: timezone }));
+}
+
+// Get current time in each event's timezone for comparison
+const now = new Date();
+const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+// Split events into categories using timezone-aware comparisons
+const upcomingEvents = events.filter((event) => {
+  const eventStartTime = new Date(event.start_time);
+  const eventTimezoneNow = getDateInTimezone(now, event.timezone || "UTC");
+  return eventStartTime > eventTimezoneNow;
+});
+
+const matchingEvents = events.filter((event) => {
+  const eventEndTime = new Date(event.end_time);
+  const eventTimezoneNow = getDateInTimezone(now, event.timezone || "UTC");
+  const eventTimezoneOneWeekAgo = getDateInTimezone(
+    oneWeekAgo,
+    event.timezone || "UTC",
+  );
+  return (
+    eventEndTime <= eventTimezoneNow && eventEndTime > eventTimezoneOneWeekAgo
+  );
+});
+
+const pastEvents = events.filter((event) => {
+  const eventEndTime = new Date(event.end_time);
+  const eventTimezoneOneWeekAgo = getDateInTimezone(
+    oneWeekAgo,
+    event.timezone || "UTC",
+  );
+  return eventEndTime <= eventTimezoneOneWeekAgo;
+});
+---
+
+<Layout
+  title="Social Spot | My Events"
+  description="These are the events you have registered for"
+  classList="h-full"
+  pageTitle="Social Spot | My Events"
+>
+  <main class="bg-[#B8E8FF] px-6 py-12">
+    <div class="max-w-6xl mx-auto space-y-8">
+      <EventSegment
+        title="Matching Period"
+        events={matchingEvents}
+        emptyMessage="Matching period is after the event has finished but before a week has passed, once an event enters this stage you can match with other attendees"
+      />
+
+      <EventSegment
+        title="Upcoming Events"
+        events={upcomingEvents}
+        emptyMessage="No upcoming events, go to the events page to find events to join"
+      />
+
+      <EventSegment
+        title="Past Events"
+        events={pastEvents}
+        emptyMessage="No past events, once an event has exited the matching period it will be moved here"
+      />
+    </div>
+  </main>
+</Layout>

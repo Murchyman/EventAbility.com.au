@@ -1,0 +1,28 @@
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+[functions.send-event-followup]
+  schedule = "@hourly"
+  external_node_modules = [ "@libsql/client", "@netlify/functions"]
+
+[functions.backup-database]
+  schedule = "0 18,7 * * *"
+  external_node_modules = ["@aws-sdk/client-s3", "@libsql/client", "@netlify/functions"]
+
+[functions.send-message-notifications]
+  schedule = "@hourly"
+  external_node_modules = [ "@libsql/client", "@netlify/functions"]
+
+[functions.recreate-events]
+  schedule = "@hourly"
+  external_node_modules = [ "@libsql/client", "@netlify/functions"]
+
+[functions.send-event-reminder]
+  schedule = "@hourly"
+  external_node_modules = [ "@libsql/client", "@netlify/functions"]
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://js.pusher.com https://cdnjs.cloudflare.com https://www.googletagmanager.com https://js.stripe.com https://app.cal.com https://*.cal.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: blob: https://*.r2.cloudflarestorage.com https://*.s3.amazonaws.com https://www.w3.org/2000/svg https://media.socialspot.com.au; font-src 'self'; connect-src 'self' blob: https://*.pusher.com wss://*.pusher.com https://*.amazonaws.com https://*.googletagmanager.com https://api.stripe.com https://cal.com https://*.cal.com; form-action 'self'; frame-ancestors 'none'; frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://app.cal.com https://*.cal.com; media-src 'self' https://*.r2.cloudflarestorage.com https://*.s3.amazonaws.com https://media.socialspot.com.au; object-src 'none'; base-uri 'self'; worker-src 'self' blob:; manifest-src 'self'"

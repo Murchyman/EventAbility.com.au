@@ -1,0 +1,447 @@
+---
+import { Image } from "astro:assets";
+import Card from "@components/generic/Card.astro";
+import RainbowButton from "@components/generic/RainbowButton.astro";
+import EventRegistrationButton from "./EventRegistrationButton.astro";
+import { calculateTotalAmount } from "src/lib/stripe";
+
+interface Props {
+  content: {
+    ImageURL: string;
+    name: string;
+    start_time: string;
+    end_time: string;
+    timezone: string;
+    location: string;
+    age: string;
+    description: string;
+    event_id: number;
+    cost: number;
+    max_participants: number | null;
+  };
+}
+
+const { content } = Astro.props;
+const error = Astro.url.searchParams.get("error");
+
+// Calculate total amount if there's a cost
+const cost = Number(content.cost ?? 0);
+const totalAmount = cost > 0 ? calculateTotalAmount(cost) : 0;
+
+// Format the date server-side
+const formattedDate = new Intl.DateTimeFormat("en-US", {
+  timeZone: content.timezone || "UTC",
+  month: "long",
+  day: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: true,
+}).format(new Date(content.start_time));
+---
+
+<div
+  class="min-h-screen p-4 md:p-6 flex flex-col max-w-4xl mx-auto w-full"
+  data-end-time={content.end_time}
+  data-timezone={content.timezone}
+>
+  <div id="expiration-banner" class="mb-6 w-full hidden">
+    <div class="bg-red-100 border-2 border-red-500 rounded-lg p-6">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 flex-shrink-0 text-red-500">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm-1.72 6.97a.75.75 0 10-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 101.06 1.06L12 13.06l1.72 1.72a.75.75 0 101.06-1.06L13.06 12l1.72-1.72a.75.75 0 10-1.06-1.06L12 10.94l-1.72-1.72z"
+              clip-rule="evenodd"></path>
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-xl font-bold text-red-800">Event Has Ended</h2>
+          <p class="text-red-700">
+            This event has already taken place and registration is no longer
+            available.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="notification-banner" class="hidden mb-4">
+    <div class="bg-green-50 border-2 border-green-500 rounded-lg p-6">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 flex-shrink-0 text-green-500">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z"
+              clip-rule="evenodd"></path>
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-xl font-bold text-green-800">Success!</h2>
+          <p class="text-green-700">
+            You have successfully registered for this event.
+          </p>
+        </div>
+        <button
+          class="ml-auto text-green-700 hover:text-green-900"
+          onclick="this.closest('#notification-banner').style.display = 'none'"
+        >
+          <svg
+            class="w-5 h-5"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+              clip-rule="evenodd"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <Card>
+    {/* Event Image */}
+    <div
+      id="event-image"
+      class="relative h-[300px] md:h-[400px] w-full rounded-t-lg overflow-hidden border-b-2 border-black"
+    >
+      <Image
+        src={content.ImageURL}
+        alt={content.name}
+        width={800}
+        height={400}
+        class="h-full w-full object-cover"
+      />
+      <div
+        class="absolute inset-0 bg-gradient-to-b from-transparent to-black/50"
+      >
+      </div>
+      {/* Age Badge */}
+      <div class="absolute bottom-4 left-4">
+        <span
+          class="bg-white/90 text-black px-4 py-2 rounded-full text-sm font-bold shadow-sm"
+        >
+          Age {content.age}
+        </span>
+      </div>
+    </div>
+
+    {/* Event Details */}
+    <div class="p-4 md:p-6 space-y-8">
+      {
+        error && (
+          <div class="bg-red-50 border-2 border-red-500 rounded-lg p-6 mb-6">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 flex-shrink-0 text-red-500">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm-1.72 6.97a.75.75 0 10-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 101.06 1.06L12 13.06l1.72 1.72a.75.75 0 101.06-1.06L13.06 12l1.72-1.72a.75.75 0 10-1.06-1.06L12 10.94l-1.72-1.72z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h2 class="text-xl font-bold text-red-800">Error</h2>
+                <p class="text-red-700">{error}</p>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {/* Title */}
+      <h1 class="text-2xl md:text-4xl font-bold tracking-tight">
+        {content.name}
+      </h1>
+
+      {/* Event Information */}
+      <div class="space-y-6 border-t-2 border-b-2 border-black/10 py-6">
+        {/* Date and Time */}
+        <div class="flex items-start gap-3">
+          <div class="w-6 h-6 mt-1 flex-shrink-0">
+            <svg viewBox="0 0 24 24" class="w-full h-full" fill="currentColor">
+              <path
+                d="M12 2C6.5 2 2 6.5 2 12C2 17.5 6.5 22 12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20ZM12.5 7H11V13L16.2 16.2L17 14.9L12.5 12.2V7Z"
+              ></path>
+            </svg>
+          </div>
+          <div>
+            <div
+              class="font-bold text-lg md:text-xl"
+              data-date={content.start_time}
+              data-timezone={content.timezone}
+            >
+              {formattedDate}
+            </div>
+          </div>
+        </div>
+
+        {/* Location */}
+        <div class="flex items-start gap-3">
+          <div class="w-6 h-6 mt-1 flex-shrink-0">
+            <svg class="w-full h-full" viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zM7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 2.88-2.88 7.19-5 9.88C9.92 16.21 7 11.85 7 9z"
+              ></path>
+              <circle cx="12" cy="9" r="2.5"></circle>
+            </svg>
+          </div>
+          <div class="font-bold text-lg md:text-xl">{content.location}</div>
+        </div>
+
+        {/* Cost */}
+        <div class="flex items-start gap-3">
+          <div class="w-6 h-6 mt-1 flex-shrink-0">
+            <svg class="w-full h-full" viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.04c.1 1.7 1.36 2.66 2.86 2.97V19h2.34v-1.67c1.52-.29 2.72-1.16 2.73-2.77-.01-2.2-1.9-2.96-3.66-3.42z"
+              ></path>
+            </svg>
+          </div>
+          <div class="font-bold text-lg md:text-xl">
+            {
+              content.cost === undefined ||
+              content.cost === null ||
+              content.cost === 0
+                ? "Free"
+                : `$${(totalAmount / 100).toFixed(2)} AUD`
+            }
+          </div>
+        </div>
+      </div>
+
+      {/* Description */}
+      <div class="prose prose-lg max-w-none">
+        <div class="text-base md:text-lg" set:html={content.description} />
+      </div>
+
+      {/* New About Social Spot Section */}
+      <div class="border-t-2 border-black/10 pt-6">
+        <details class="group" open>
+          <summary class="flex items-center cursor-pointer list-none">
+            <h2 class="text-xl md:text-2xl font-bold">New to Social Spot?</h2>
+            <span class="transition group-open:rotate-180 flex-shrink-0 ml-4">
+              <svg
+                fill="none"
+                height="24"
+                shape-rendering="geometricPrecision"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                width="24"
+              >
+                <path d="M6 9l6 6 6-6"></path>
+              </svg>
+            </span>
+          </summary>
+          <div class="mt-4 space-y-4">
+            <div
+              class="bg-gradient-to-r from-[#FF5F1F]/10 to-[#FF8F1F]/10 rounded-lg p-6"
+            >
+              <p class="poppins text-lg font-medium mb-4">
+                Welcome! Social Spot is all about fun events where singles can
+                meet naturally. Here's how it works:
+              </p>
+              <div class="space-y-4">
+                <div class="flex items-start gap-3">
+                  <div class="w-6 h-6 mt-1 flex-shrink-0 text-[#FF5F1F]">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <path
+                        d="M4.5 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM14.25 8.625a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0zM1.5 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM17.25 19.128l-.001.144a2.25 2.25 0 01-.233.96 10.088 10.088 0 005.06-1.01.75.75 0 00.42-.643 4.875 4.875 0 00-6.957-4.611 8.586 8.586 0 011.71 5.157v.003z"
+                      ></path>
+                    </svg>
+                  </div>
+                  <p class="poppins">
+                    <strong>Step 1:</strong> Join this accessible event and meet
+                    other people in a welcoming environment. Everyone is here to
+                    make friends and connect!
+                  </p>
+                </div>
+                <div class="flex items-start gap-3">
+                  <div class="w-6 h-6 mt-1 flex-shrink-0 text-[#FF5F1F]">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <path
+                        d="M4.5 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM14.25 8.625a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0zM1.5 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM17.25 19.128l-.001.144a2.25 2.25 0 01-.233.96 10.088 10.088 0 005.06-1.01.75.75 0 00.42-.643 4.875 4.875 0 00-6.957-4.611 8.586 8.586 0 011.71 5.157v.003z"
+                      ></path>
+                    </svg>
+                  </div>
+                  <p class="poppins">
+                    <strong>Step 2:</strong> After the event, send friend requests
+                    to people you'd like to stay in touch with. All requests are
+                    private until both people want to connect.
+                  </p>
+                </div>
+                <div class="flex items-start gap-3">
+                  <div class="w-6 h-6 mt-1 flex-shrink-0 text-[#FF5F1F]">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <path
+                        d="M4.5 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM14.25 8.625a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0zM1.5 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM17.25 19.128l-.001.144a2.25 2.25 0 01-.233.96 10.088 10.088 0 005.06-1.01.75.75 0 00.42-.643 4.875 4.875 0 00-6.957-4.611 8.586 8.586 0 011.71 5.157v.003z"
+                      ></path>
+                    </svg>
+                  </div>
+                  <p class="poppins">
+                    <strong>Step 3:</strong> Once connected, you can chat through
+                    our platform and plan future meetups. Build lasting friendships
+                    in our supportive community!
+                  </p>
+                </div>
+              </div>
+              <div class="mt-6">
+                <p class="poppins text-center mb-4">
+                  <strong>Important:</strong> To keep events comfortable and inclusive
+                  for everyone, please be respectful of personal boundaries and privacy
+                  preferences.
+                </p>
+                <div class="flex justify-center">
+                  <a
+                    href="/"
+                    class="inline-flex items-center gap-2 text-[#FF5F1F] hover:text-[#FF8F1F] font-medium"
+                  >
+                    Find out more on our homepage
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      class="w-5 h-5"
+                    >
+                      <path
+                        fill-rule="evenodd"
+                        d="M5 10a.75.75 0 01.75-.75h6.638L10.23 7.29a.75.75 0 111.04-1.08l3.5 3.25a.75.75 0 010 1.08l-3.5 3.25a.75.75 0 11-1.04-1.08l2.158-1.96H5.75A.75.75 0 015 10z"
+                        clip-rule="evenodd"></path>
+                    </svg>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      {/* Registration Section */}
+      <div class="pt-6">
+        <div id="registration-section">
+          <EventRegistrationButton
+            eventId={content.event_id}
+            cost={content.cost}
+            maxParticipants={content.max_participants}
+            server:defer
+          >
+            <RainbowButton slot="fallback" class="w-full">
+              <div class="flex items-center justify-center gap-2">
+                Loading
+                <svg
+                  class="h-5 w-5 animate-spin ml-2"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"></circle>
+                  <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+              </div>
+            </RainbowButton>
+          </EventRegistrationButton>
+        </div>
+        <div id="expired-message" class="hidden">
+          <div
+            class="w-full bg-red-100 text-red-800 px-6 py-4 rounded-lg font-bold text-center text-lg border-2 border-red-300"
+          >
+            This event has ended and registration is closed.
+          </div>
+        </div>
+      </div>
+    </div>
+  </Card>
+</div>
+
+<script>
+  function checkEventExpiration() {
+    const container = document.querySelector("[data-end-time]");
+    if (!container) return;
+
+    const endTime = container.getAttribute("data-end-time");
+    if (!endTime) return;
+
+    // Both endTime and new Date() will be in UTC, so comparison is accurate
+    const eventEndTime = new Date(endTime);
+    const now = new Date();
+    const isExpired = eventEndTime < now;
+
+    // Update UI based on expiration
+    const expirationBanner = document.getElementById("expiration-banner");
+    const eventImage = document.getElementById("event-image");
+    const registrationSection = document.getElementById("registration-section");
+    const expiredMessage = document.getElementById("expired-message");
+
+    if (isExpired) {
+      expirationBanner?.classList.remove("hidden");
+      eventImage?.classList.add("opacity-75", "grayscale");
+      registrationSection?.classList.add("hidden");
+      expiredMessage?.classList.remove("hidden");
+    } else {
+      expirationBanner?.classList.add("hidden");
+      eventImage?.classList.remove("opacity-75", "grayscale");
+      registrationSection?.classList.remove("hidden");
+      expiredMessage?.classList.add("hidden");
+    }
+  }
+
+  // Only check expiration on initial page load
+  checkEventExpiration();
+
+  // Setup other handlers
+  function setupHandlers() {
+    const urlParams = new URLSearchParams(window.location.search);
+
+    if (urlParams.get("booking") === "success") {
+      const banner = document.getElementById("notification-banner");
+      if (banner) {
+        banner.style.display = "block";
+      }
+    }
+  }
+
+  setupHandlers();
+  document.addEventListener("astro:page-load", setupHandlers);
+</script>

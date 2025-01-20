@@ -1,0 +1,45 @@
+---
+import Card from "@components/generic/Card.astro";
+import EventList from "./EventList.astro";
+
+interface Props {
+  title: string;
+  events: Array<any>;
+  emptyMessage?: string;
+}
+
+const { title, events, emptyMessage = "No events found" } = Astro.props;
+---
+
+<section class="mt-8">
+  <Card>
+    <div class="flex justify-center items-start">
+      <h2 class="text-2xl md:text-4xl mb-8 poppins font-medium text-center">
+        {title}
+      </h2>
+    </div>
+    {
+      events.length > 0 ? (
+        <EventList posts={events} />
+      ) : (
+        <div class="flex flex-col items-center py-8 text-center">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-16 h-16  mb-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.5"
+              d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"
+            />
+          </svg>
+          <p class="poppins mt-4 px-4">{emptyMessage}</p>
+        </div>
+      )
+    }
+  </Card>
+</section>

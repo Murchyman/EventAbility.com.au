@@ -1,0 +1,9 @@
+{
+  "name": "send-event-followup",
+  "version": "1.0.0",
+  "dependencies": {
+    "@libsql/client": "^0.14.0",
+    "@netlify/functions": "^2.0.0",
+    "node-mailjet": "^6.0.6"
+  }
+} 

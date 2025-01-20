@@ -1,0 +1,37 @@
+---
+import EventSummaryCard from "./EventSummaryCard.astro";
+
+interface Props {
+  posts: Array<{
+    event_id: number;
+    age: string;
+    imageURL: string;
+    name: string;
+    description: string;
+    location: string;
+    start_time: string;
+    end_time: string;
+    timezone: string;
+    is_participating: boolean;
+  }>;
+}
+
+// You can add runtime validation if needed
+const { posts } = Astro.props;
+const validatedPosts = posts.map((post) => {
+  if (!post.event_id || !post.name) {
+    console.warn("Invalid event data:", post);
+  }
+  return post;
+});
+---
+
+<ul class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+  {
+    validatedPosts.map((post) => (
+      <li>
+        <EventSummaryCard post={post} />
+      </li>
+    ))
+  }
+</ul>

@@ -1,0 +1,544 @@
+---
+import Card from "@components/generic/Card.astro";
+import RecentEvents from "@components/generic/RecentEvents.astro";
+import RainbowButton from "@components/generic/RainbowButton.astro";
+import Image from "astro/components/Image.astro";
+
+// Data
+const images = [
+    {
+        src: "https://media.socialspot.com.au/girlsbeach.webp",
+        alt: "Beach",
+        className: "top-0 left-0 w-[55%] h-[45%]",
+        rotation: "-3deg",
+    },
+    {
+        src: "https://media.socialspot.com.au/outside.webp",
+        alt: "Group activity",
+        className: "bottom-0 left-[5%] w-[55%] h-[45%]",
+        rotation: "2deg",
+    },
+    {
+        src: "https://media.socialspot.com.au/tapsmooloolaba.webp",
+        alt: "People enjoying a social event",
+        className: "top-[10%] right-0 w-[45%] h-[40%]",
+        rotation: "-2deg",
+    },
+    {
+        src: "https://media.socialspot.com.au/girlsIceBath.webp",
+        alt: "Ice bath",
+        className: "bottom-[10%] right-[5%] w-[45%] h-[40%]",
+        rotation: "3deg",
+    },
+];
+
+const howItWorksSteps = [
+    {
+        icon: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z",
+        title: "1. Find an Event",
+        description:
+            "Tired of feeling isolated and disconnected? Join our accessible and inclusive events designed for people with disabilities! Our welcoming community events let you meet potential friends face-to-face in comfortable, supportive settings. No more barriers - connect with people who understand your journey.",
+    },
+    {
+        icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z",
+        title: "2. Connect with Others",
+        description:
+            "Meet new friends in a natural, pressure-free environment. No awkward introductions or forced conversations - just organic interactions through shared activities. Get to know people who share your interests and experiences in a supportive community.",
+    },
+    {
+        icon: "M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z",
+        title: "3. Stay in Touch",
+        description:
+            "After the event, connect with the people you met through our accessible platform. Send friend requests to those you'd like to keep in touch with. Our platform makes it easy to maintain friendships and plan future meetups in a comfortable, inclusive way.",
+    },
+];
+---
+
+<div class="md:hidden block">
+    {/* Hero Section */}
+    <section id="about" class="grid md:grid-cols-1 mt-8">
+        <div
+            class="flex flex-col md:flex-row justify-between items-center gap-8 py-8"
+        >
+            <div class="flex flex-col gap-6 md:w-1/2 text-center items-center">
+                <h1
+                    class="poppins text-4xl md:text-5xl lg:text-6xl text-black font-bold leading-tight tracking-tight text-center"
+                >
+                    Connect & Belong<br />
+                    <span class="font-extrabold block mt-2"
+                        >Your Journey, Your Community</span
+                    >
+                </h1>
+                <p
+                    class="poppins text-lg md:text-xl leading-relaxed text-center max-w-[600px]"
+                >
+                    Join our welcoming community designed for people with
+                    disabilities. Find friends who understand your journey and
+                    share your interests through accessible, inclusive events.
+                </p>
+                <div class="flex gap-4 justify-center">
+                    <RainbowButton href="/events">
+                        Discover Accessible Events
+                    </RainbowButton>
+                </div>
+            </div>
+            <div class="w-full min-h-[300px]">
+                <div
+                    class="relative w-full max-w-lg aspect-[4/3] p-4 h-full mx-auto"
+                >
+                    {
+                        images.map((image) => (
+                            <div
+                                class={`absolute ${image.className} polaroid-container`}
+                                style={`transform: rotate(${image.rotation})`}
+                            >
+                                <div class="bg-white p-3 shadow-xl w-full h-full">
+                                    <Image
+                                        src={image.src}
+                                        alt={image.alt}
+                                        width={800}
+                                        height={600}
+                                        class="w-full h-full object-cover mb-2"
+                                    />
+                                </div>
+                            </div>
+                        ))
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {/* Problem vs Solution Section */}
+    <section class="mt-16">
+        <div class="grid md:grid-cols-2 gap-8">
+            {/* Problem Card */}
+            <Card>
+                <div class="relative h-full flex flex-col justify-between">
+                    <div>
+                        <h3
+                            class="text-2xl md:text-3xl poppins font-medium mb-6"
+                        >
+                            The Problem
+                        </h3>
+                        <div class="flex flex-col md:hidden items-center gap-6">
+                            <div class="w-40 h-40 relative">
+                                <Image
+                                    src="https://media.socialspot.com.au/hopelessWoman.webp"
+                                    alt="Person feeling isolated"
+                                    width={160}
+                                    height={160}
+                                    class="w-full h-full object-cover rounded-full shadow-lg border-4 border-white"
+                                />
+                            </div>
+                            <div
+                                class="relative bg-white rounded-2xl p-6 w-full shadow-lg"
+                            >
+                                <div
+                                    class="absolute w-6 h-6 bg-white transform rotate-45 left-1/2 -translate-x-1/2 -top-3"
+                                >
+                                </div>
+                                <p class="poppins text-lg text-center">
+                                    "It's challenging to find places where I
+                                    feel truly welcome and understood. Most
+                                    social spaces aren't designed with
+                                    accessibility in mind, and it's hard to
+                                    connect with people who understand my
+                                    experiences."
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-8 space-y-3">
+                        <div class="flex items-center gap-2">
+                            <svg
+                                class="w-5 h-5 text-red-500 flex-shrink-0"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                            >
+                                <path
+                                    fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                ></path>
+                            </svg>
+                            <p class="poppins">
+                                Feeling isolated and disconnected from others
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <svg
+                                class="w-5 h-5 text-red-500 flex-shrink-0"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                            >
+                                <path
+                                    fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                ></path>
+                            </svg>
+                            <p class="poppins">
+                                Limited accessible social spaces and events
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <svg
+                                class="w-5 h-5 text-red-500 flex-shrink-0"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                            >
+                                <path
+                                    fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                ></path>
+                            </svg>
+                            <p class="poppins">
+                                Difficulty finding friends who understand your
+                                journey
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </Card>
+
+            {/* Solution Card */}
+            <Card>
+                <div class="relative h-full flex flex-col justify-between">
+                    <div>
+                        <h3
+                            class="text-2xl md:text-3xl poppins font-medium mb-6"
+                        >
+                            The Solution
+                        </h3>
+                        <div class="flex flex-col md:hidden items-center gap-6">
+                            <div class="w-40 h-40 relative">
+                                <Image
+                                    src="https://media.socialspot.com.au/happyWoman.webp"
+                                    alt="Happy at social event"
+                                    width={160}
+                                    height={160}
+                                    class="w-full h-full object-cover rounded-full shadow-lg border-4 border-white"
+                                />
+                            </div>
+                            <div
+                                class="relative bg-white rounded-2xl p-6 w-full shadow-lg"
+                            >
+                                <div
+                                    class="absolute w-6 h-6 bg-white transform rotate-45 left-1/2 -translate-x-1/2 -top-3"
+                                >
+                                </div>
+                                <p class="poppins text-lg text-center">
+                                    "I love Social Spot events! It's so
+                                    refreshing to be in a space where
+                                    accessibility and inclusion come first. I've
+                                    made genuine friends who understand my
+                                    experiences, and the activities are always
+                                    designed with everyone in mind!"
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-8 space-y-3">
+                        <div class="flex items-center gap-2">
+                            <svg
+                                class="w-5 h-5 text-green-500 flex-shrink-0"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                            >
+                                <path
+                                    fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                ></path>
+                            </svg>
+                            <p class="poppins">
+                                Meet new friends in welcoming, accessible
+                                settings
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <svg
+                                class="w-5 h-5 text-green-500 flex-shrink-0"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                            >
+                                <path
+                                    fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                ></path>
+                            </svg>
+                            <p class="poppins">
+                                Connect through shared experiences and interests
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <svg
+                                class="w-5 h-5 text-green-500 flex-shrink-0"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                            >
+                                <path
+                                    fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                ></path>
+                            </svg>
+                            <p class="poppins">
+                                Build lasting friendships in a supportive
+                                community
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </Card>
+        </div>
+    </section>
+
+    {/* How It Works Section */}
+    <section class="mt-16">
+        <h2
+            class="text-3xl md:text-4xl lg:text-5xl mb-12 poppins text-center font-bold"
+        >
+            How Does It Work?
+        </h2>
+        <div
+            class="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
+            id="howItWorksCarousel"
+        >
+            {
+                howItWorksSteps.map((step, index) => (
+                    <div
+                        class="snap-center shrink-0 w-[300px] h-full"
+                        data-index={index}
+                    >
+                        <Card>
+                            <div class="flex flex-col items-start h-[400px]">
+                                <div class="w-full flex-1">
+                                    <div class="w-full flex justify-center mb-4">
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            class="w-16 h-16 text-black"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d={step.icon}
+                                            />
+                                        </svg>
+                                    </div>
+                                    <h3 class="text-xl md:text-2xl poppins mb-4 font-medium text-center">
+                                        {step.title}
+                                    </h3>
+                                    <p class="poppins text-left">
+                                        {step.description}
+                                    </p>
+                                </div>
+                            </div>
+                        </Card>
+                    </div>
+                ))
+            }
+        </div>
+        <div class="flex justify-center gap-2 mt-4" id="carouselIndicators">
+            {
+                howItWorksSteps.map((_, index) => (
+                    <div
+                        class="w-2 h-2 rounded-full bg-gray-400 transition-all duration-300"
+                        data-index={index}
+                    />
+                ))
+            }
+        </div>
+    </section>
+
+    {/* Upcoming Events Section */}
+    <section class="mt-16">
+        <div class="min-h-35em">
+            <div class="flex justify-between items-start">
+                <h2
+                    class="text-3xl md:text-4xl lg:text-5xl mb-12 poppins text-center w-full font-bold"
+                >
+                    Upcoming Events
+                </h2>
+            </div>
+            <div class="events-container">
+                <RecentEvents count={3} />
+                <div
+                    class="text-center mt-12 view-more-container hidden md:hidden"
+                >
+                    <a href="/events">
+                        <RainbowButton href="/events">
+                            View More Upcoming Events
+                        </RainbowButton>
+                    </a>
+                </div>
+            </div>
+            <div class="events-expanded hidden">
+                <RecentEvents />
+            </div>
+        </div>
+    </section>
+
+    {/* Business Section */}
+    <section class="mt-16">
+        <div class="flex flex-col gap-8">
+            <div class="text-center">
+                <h2
+                    class="text-3xl md:text-4xl lg:text-5xl mb-8 poppins font-bold"
+                >
+                    Host Inclusive Events
+                </h2>
+                <p class="text-lg md:text-xl poppins max-w-2xl mx-auto">
+                    Partner with Social Spot to create accessible, welcoming
+                    spaces for our community. We handle the platform, you create
+                    inclusive experiences that bring people together.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-4">
+                <Card>
+                    <div class="flex flex-col items-center text-center h-full">
+                        <svg
+                            class="w-10 h-10 text-black mb-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            ></path>
+                        </svg>
+                        <h3 class="text-lg font-medium mb-2">
+                            You Have Full Control
+                        </h3>
+                        <p class="">
+                            You set your own prices, You keep 100% of all ticket
+                            sales. Plus any additional revenue from food and
+                            drinks.
+                        </p>
+                    </div>
+                </Card>
+
+                <Card>
+                    <div class="flex flex-col items-center text-center h-full">
+                        <svg
+                            class="w-10 h-10 text-black mb-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                            ></path>
+                        </svg>
+                        <h3 class="text-lg font-medium mb-2">
+                            Zero Tech Hassle
+                        </h3>
+                        <p class="">
+                            We manage payments, marketing, and matching. You
+                            focus on creating great experiences.
+                        </p>
+                    </div>
+                </Card>
+
+                <Card>
+                    <div class="flex flex-col items-center text-center h-full">
+                        <svg
+                            class="w-10 h-10 text-black mb-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                            ></path>
+                        </svg>
+                        <h3 class="text-lg font-medium mb-2">Full Support</h3>
+                        <p class="">
+                            We are here to help you every step of the way, you
+                            can contact us anytime.
+                        </p>
+                    </div>
+                </Card>
+            </div>
+
+            <div class="flex gap-4 justify-center">
+                <RainbowButton href="/become-a-host" class="text-lg">
+                    Learn More About Hosting
+                </RainbowButton>
+            </div>
+        </div>
+    </section>
+</div>
+
+<style>
+    .polaroid-container {
+        transition: transform 0.3s ease;
+    }
+
+    .polaroid-container:hover {
+        transform: rotate(0deg) scale(1.02) !important;
+        z-index: 10;
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const viewMoreContainer = document.querySelector(
+            ".view-more-container",
+        );
+        const eventsContainer = document.querySelector(".events-container");
+        const eventsExpanded = document.querySelector(".events-expanded");
+        const viewMoreButton = document.querySelector("button");
+
+        if (eventsExpanded && eventsContainer) {
+            const expandedEvents = eventsExpanded.querySelectorAll("li");
+            if (expandedEvents.length > 3) {
+                viewMoreContainer?.classList.remove("hidden");
+            }
+        }
+
+        viewMoreButton?.addEventListener("click", () => {
+            eventsContainer?.classList.add("hidden");
+            eventsExpanded?.classList.remove("hidden");
+        });
+
+        // Carousel indicator functionality
+        const carousel = document.getElementById("howItWorksCarousel");
+        const indicators = document
+            .getElementById("carouselIndicators")
+            ?.querySelectorAll("div");
+
+        if (carousel && indicators) {
+            const updateIndicators = () => {
+                const scrollPosition = carousel.scrollLeft;
+                const slideWidth = carousel.offsetWidth;
+                const currentIndex = Math.round(scrollPosition / slideWidth);
+
+                indicators.forEach((indicator, index) => {
+                    if (index === currentIndex) {
+                        indicator.classList.remove("bg-gray-400");
+                        indicator.classList.add("bg-black", "w-4");
+                    } else {
+                        indicator.classList.remove("bg-black", "w-4");
+                        indicator.classList.add("bg-gray-400");
+                    }
+                });
+            };
+
+            carousel.addEventListener("scroll", updateIndicators);
+            // Initialize indicators
+            updateIndicators();
+        }
+    });
+</script>

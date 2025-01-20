@@ -1,0 +1,76 @@
+This document is a list of features currently implemented in the website
+
+Authentication
+-------------
+• Login 
+• Reset Password
+• Create an account
+    - Field Validation
+
+Event Management
+---------------
+• Event Registration
+    - Email should be sent upon successful registration
+    - Events that have a max attendance should not permit registrations past the max attendance
+    - Free event Registration
+    - Paid event Registration
+        * Stripe Integration and ensuring successful payment
+    - Event Registration button when not logged in says sign in to register and redirects to login page
+    - Events in the past should show as expired and user should not be able to register
+    - A reminder should be sent 24 hours before the event
+
+• Ticket Viewing
+    - Users who registered for an event can view their tickets
+    - Attempts to view a ticket for an event they did not register for displays an error message
+
+• Event Summary button displays register if unregister and shows view booking if registered   
+• Bookings trifurcates events by time frame correctly
+
+Profile Management
+-----------------
+• Profile editing works as expected
+    - Field validation works as expected
+• Multi-step profile creation
+• Profile picture upload
+
+
+Matching System
+--------------
+• Users can send likes to other users
+    - If a user sends the first like it should say "like sent" 
+    - If the second user has already sent a like it should say "Match" when the first user clicks the like button
+• If a user has blocked another user
+    - The other user should not be visible
+    - The other user should not be able to see the first user
+• A reminder email should be sent to access the matching area after the event ends
+• If another user matches them they will recieve an email
+• Users can send reports that email the admin
+
+Chat System
+----------
+• After Matching users can chat with each other
+• Chats are real time
+• Notifications
+    - Users see notifications in the app on the chat window and on the chat button
+    - Send a reminder email if a user has an unread message older than 20 min
+    - Do not send repeat emails for the same message
+    - Do not send more than 1 email per day
+• Message read receipts
+
+UI/Navigation
+------------
+• Responsive hamburger menu for mobile navigation
+• Dropdown component for various selections
+
+Security Features
+---------------
+• Rate limiting on API endpoints
+• Input sanitization
+• CSRF protection
+
+Backend Features
+---------------
+• Database caching for performance
+• Webhook rebuilds the site on netlify when a new event is created
+• API rate limiting and throttling
+

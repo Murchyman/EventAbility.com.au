@@ -1,0 +1,120 @@
+---
+import Layout from "@layouts/Default.astro";
+import Card from "@components/generic/Card.astro";
+
+export const prerender = true;
+---
+
+<Layout title="Privacy Policy" description="Our Privacy Policy">
+  <div class="min-h-screen bg-[#00B4FF] p-6">
+    <Card>
+      <div class="space-y-6 max-w-3xl mx-auto">
+        <h1 class="text-4xl font-bold tracking-tight">
+          Privacy Policy for socialspot.com.au
+        </h1>
+        <p class="text-lg">Last updated: 30/11/2024</p>
+
+        <p class="text-lg">
+          At socialspot.com.au, we are committed to protecting your privacy and
+          ensuring the security of your personal information. This Privacy
+          Policy outlines how we collect, use, store, and disclose your personal
+          information when you use our website and services.
+        </p>
+
+        <section class="space-y-4">
+          <h2 class="text-2xl font-semibold">Information We Collect</h2>
+          <p class="text-lg">We collect the following personal information:</p>
+          <ul class="list-disc list-inside text-lg ml-4 space-y-2">
+            <li>Email address</li>
+            <li>Name</li>
+            <li>Age</li>
+            <li>Profile picture</li>
+            <li>Instagram handle</li>
+            <li>Chat messages</li>
+            <li>Personal interests and preferences</li>
+          </ul>
+        </section>
+
+        <section class="space-y-4">
+          <h2 class="text-2xl font-semibold">How We Use Your Information</h2>
+          <div class="space-y-4">
+            <p class="text-lg">
+              <strong>Email Address:</strong> We use your email address to send you
+              important notifications and updates related to your account and our
+              services. We do not share your email address with third parties.
+            </p>
+            <p class="text-lg">
+              <strong>Name, Age, and Profile Picture:</strong> This information is
+              visible to other users on socialspot.com.au to facilitate social interactions
+              on our platform.
+            </p>
+            <p class="text-lg">
+              <strong>Personal Interests and Preferences:</strong> We collect and
+              display information about your interests and preferences to enhance
+              user matching and facilitate meaningful connections between users.
+              This information is visible to other users on the platform to help
+              them understand your interests and find common ground for social interaction.
+            </p>
+            <p class="text-lg">
+              <strong>Chat Messages:</strong> Your chat messages are only visible
+              to the users you are communicating with. In the event of a report,
+              our moderators may review chat messages to ensure compliance with our
+              community guidelines.
+            </p>
+            <p class="text-lg">
+              <strong>Instagram Handle:</strong> If provided, your Instagram handle
+              will be visible on your profile to other users. This allows other users
+              to find and connect with you on Instagram. Sharing your Instagram handle
+              is optional, and you can remove it from your profile at any time.
+            </p>
+          </div>
+        </section>
+
+        <section class="space-y-4">
+          <h2 class="text-2xl font-semibold">Data Security</h2>
+          <p class="text-lg">
+            We implement appropriate technical and organizational measures to
+            protect your personal information from unauthorized access,
+            alteration, disclosure, or destruction.
+          </p>
+        </section>
+
+        <section class="space-y-4">
+          <h2 class="text-2xl font-semibold">Your Rights</h2>
+          <p class="text-lg">
+            You have the right to access, correct, or delete your personal
+            information. You can update most of your information directly
+            through your account settings. For any additional requests, please
+            contact us using the information provided below.
+          </p>
+        </section>
+
+        <section class="space-y-4">
+          <h2 class="text-2xl font-semibold">Contact Us</h2>
+          <p class="text-lg">
+            If you have any questions about this Privacy Policy or our privacy
+            practices, please contact us at:
+          </p>
+          <div class="text-lg space-y-2">
+            <p>
+              Customer Support:<br />
+              <a
+                href="mailto:support@socialspot.com.au"
+                class="text-[#FF5F1F] hover:underline"
+                >support@socialspot.com.au</a
+              >
+            </p>
+            <p>
+              Venue Support:<br />
+              <a
+                href="mailto:venues@socialspot.com.au"
+                class="text-[#FF5F1F] hover:underline"
+                >venues@socialspot.com.au</a
+              >
+            </p>
+          </div>
+        </section>
+      </div>
+    </Card>
+  </div>
+</Layout>

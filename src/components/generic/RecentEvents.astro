@@ -1,0 +1,86 @@
+---
+import EventList from "@components/events/EventList.astro";
+import { turso } from "src/lib/turso";
+
+interface Props {
+  count?: number;
+}
+
+const { count } = Astro.props;
+
+interface Event {
+  event_id: number;
+  age: string;
+  imageURL: string;
+  name: string;
+  description: string;
+  location: string;
+  start_time: string;
+  end_time: string;
+  timezone: string;
+  is_participating: boolean;
+}
+
+let result;
+if (Astro.locals.user) {
+  result = await turso.execute({
+    sql: "SELECT e.*, CASE WHEN ep.user_id IS NOT NULL THEN true ELSE false END AS is_participating FROM events e LEFT JOIN Event_Participants ep ON e.event_id = ep.event_id AND ep.user_id = ? GROUP BY e.event_id;",
+    args: [Astro.locals.user.id],
+  });
+} else {
+  result = await turso.execute({
+    sql: "SELECT e.*, false as is_participating FROM events e;",
+    args: [],
+  });
+}
+
+const formattedEvents = result.rows.map((row) => {
+  return result.columns.reduce((obj: Event, column, index) => {
+    if (row[index] !== null) {
+      (obj as any)[column] = row[index];
+    }
+    return obj;
+  }, {} as Event);
+});
+
+// Filter events that haven't ended yet
+const currentTime = new Date().toISOString();
+const filteredEvents = formattedEvents
+  .filter((event) => event.end_time > currentTime)
+  // Sort by start time ascending
+  .sort(
+    (a, b) =>
+      new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
+  )
+  // Limit to count if specified
+  .slice(0, count);
+---
+
+{
+  filteredEvents.length > 0 ? (
+    <EventList posts={filteredEvents} />
+  ) : (
+    <div class="bg-white rounded-lg overflow-hidden">
+      <div class="p-16">
+        <svg
+          class="w-24 h-24 mx-auto mb-6 text-gray-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+          />
+        </svg>
+        <h2 class="text-3xl font-semibold text-center mb-4">No Events Found</h2>
+        <p class="text-gray-600 text-center text-lg">
+          There are currently no upcoming events scheduled. Please check back
+          later!
+        </p>
+      </div>
+    </div>
+  )
+}

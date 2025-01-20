@@ -1,0 +1,156 @@
+---
+import { Image } from "astro:assets";
+import Card from "@components/generic/Card.astro";
+import RainbowButton from "@components/generic/RainbowButton.astro";
+
+interface Props {
+  post: {
+    event_id: number;
+    age: string;
+    imageURL: string;
+    name: string;
+    description: string;
+    location: string;
+    start_time: string;
+    end_time: string;
+    timezone: string;
+    is_participating: boolean;
+  };
+}
+
+const { post } = Astro.props;
+
+const now = new Date();
+const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+const eventEndTime = new Date(post.end_time);
+const isWithinLastWeek = eventEndTime <= now && eventEndTime > oneWeekAgo;
+const isEventPast = eventEndTime < now;
+---
+
+<Card>
+  <article class="flex flex-col h-full">
+    <!-- Image Section -->
+    <div class="relative aspect-[4/3] rounded-t-lg overflow-hidden">
+      <Image
+        src={post.imageURL}
+        alt={post.name}
+        width={800}
+        height={600}
+        class="h-full w-full object-cover"
+      />
+
+      <div class="absolute bottom-2 left-4 right-4">
+        <span
+          class="inline-block px-2 py-0.5 bg-white/90 rounded-full text-base font-medium text-black"
+        >
+          Age {post.age}
+        </span>
+      </div>
+    </div>
+
+    <!-- Content Section -->
+    <div class="flex flex-col flex-grow p-6">
+      <div class="space-y-4">
+        <!-- Title -->
+        <h2 class="text-2xl font-bold tracking-tight">
+          {post.name}
+        </h2>
+
+        <!-- Info Section -->
+        <div class="space-y-3">
+          <!-- Location -->
+          <div class="flex items-start gap-3">
+            <svg
+              class="w-5 h-5 mt-1 flex-shrink-0"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <path
+                d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zM7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 2.88-2.88 7.19-5 9.88C9.92 16.21 7 11.85 7 9z"
+              ></path>
+              <circle cx="12" cy="9" r="2.5"></circle>
+            </svg>
+            <span class="text-lg leading-snug">{post.location}</span>
+          </div>
+
+          <!-- Date -->
+          <div class="flex items-start gap-3">
+            <div class="">
+              <svg class="w-5 h-5 mt-1" viewBox="0 0 24 24" fill="currentColor">
+                <path
+                  d="M12 2C6.5 2 2 6.5 2 12C2 17.5 6.5 22 12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20ZM12.5 7H11V13L16.2 16.2L17 14.9L12.5 12.2V7Z"
+                ></path>
+              </svg>
+            </div>
+            <div
+              class="text-lg leading-snug"
+              data-date={post.start_time}
+              data-timezone={post.timezone}
+            >
+              Loading...
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Button -->
+    {
+      isWithinLastWeek ? (
+        <a href={`/events/${post.event_id}/participants`}>
+          <button class="w-full bg-black text-white px-6 py-4 rounded-b-lg hover:bg-black/90 font-medium text-lg transition-colors">
+            View Participants
+          </button>
+        </a>
+      ) : (
+        !isEventPast && (
+          <a href={`/events/${post.event_id}/`}>
+            {post.is_participating ? (
+              <button class="w-full bg-black text-white px-6 py-4 rounded-b-lg hover:bg-black/90 font-medium text-lg transition-colors">
+                View Booking
+              </button>
+            ) : (
+              <RainbowButton
+                href={`/events/${post.event_id}/`}
+                class="w-full text-lg"
+              >
+                View Event
+              </RainbowButton>
+            )}
+          </a>
+        )
+      )
+    }
+  </article>
+
+  <script is:inline>
+    (function () {
+      function formatDates() {
+        document.querySelectorAll("[data-date]").forEach((element) => {
+          if (element instanceof HTMLElement && element.dataset.date) {
+            try {
+              const date = new Date(element.dataset.date);
+              const timezone = element.dataset.timezone || "UTC";
+              if (isNaN(date.getTime())) throw new Error("Invalid date");
+              element.textContent = new Intl.DateTimeFormat("en-US", {
+                timeZone: timezone,
+                month: "long",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+              }).format(date);
+            } catch (error) {
+              console.error("Error formatting date:", error);
+              element.textContent = element.dataset.date || "Invalid date";
+            }
+          }
+        });
+      }
+
+      formatDates();
+      document.addEventListener("DOMContentLoaded", formatDates);
+      document.addEventListener("astro:page-load", formatDates);
+    })();
+  </script>
+</Card>

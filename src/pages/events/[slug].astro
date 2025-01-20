@@ -1,0 +1,50 @@
+---
+import Layout from "@layouts/Default.astro";
+import { getCollection } from "astro:content";
+import type { CollectionEntry } from "astro:content";
+import EventContent from "@components/events/EventContent.astro";
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  const events = await getCollection("events");
+  return events.map((event: CollectionEntry<"events">) => ({
+    params: { slug: event.data.event_id.toString() },
+    props: { event },
+  }));
+}
+
+interface Props {
+  event: CollectionEntry<"events">;
+}
+
+const { event } = Astro.props;
+
+if (!event?.data) {
+  console.error("No event data found");
+  return Astro.redirect("/404");
+}
+
+// Format event data to match the expected structure
+const formattedEvent = {
+  ImageURL: event.data.imageURL,
+  name: event.data.name,
+  start_time: event.data.start_time.toISOString(),
+  end_time: event.data.end_time.toISOString(),
+  timezone: event.data.timezone,
+  location: event.data.location,
+  age: event.data.age,
+  description: event.data.description,
+  event_id: event.data.event_id,
+  cost: event.data.cost,
+  max_participants: event.data.max_participants,
+};
+---
+
+<Layout title={formattedEvent.name} description={formattedEvent.description}>
+  <main class="bg-[#B8E8FF] flex flex-col items-center">
+    <EventContent content={formattedEvent}>
+      <slot />
+    </EventContent>
+  </main>
+</Layout>

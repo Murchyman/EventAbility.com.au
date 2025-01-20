@@ -1,0 +1,7 @@
+.astro
+node_modules
+dist
+.netlify
+.vercel
+.env.development
+.env.production

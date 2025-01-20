@@ -1,0 +1,11 @@
+{
+  "name": "backup-database",
+  "version": "1.0.0",
+  "description": "Function to backup Turso database to R2",
+  "main": "backup-database.ts",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.485.0",
+    "@libsql/client": "^0.4.0",
+    "@netlify/functions": "^2.4.1"
+  }
+} 

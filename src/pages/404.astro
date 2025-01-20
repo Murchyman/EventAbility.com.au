@@ -1,0 +1,45 @@
+---
+import Layout from "@layouts/Default.astro";
+import Card from "@components/generic/Card.astro";
+
+
+const title = "404 - Page Not Found";
+const description = "Sorry, we couldn't find the page you were looking for.";
+const error = Astro.url.searchParams.get("error");
+console.log(error); 
+---
+
+<Layout {title} {description}>
+    <div class="bg-[#B8E8FF] min-h-[calc(100vh-200px)]">
+        <main class="container mx-auto px-4 py-16">
+            <Card>
+                <div class="flex flex-col items-center gap-8 text-center p-8">
+                    <h1
+                        class="text-8xl md:text-9xl font-extrabold poppins tracking-tight"
+                    >
+                        404
+                    </h1>
+                    <h2 class="text-3xl md:text-4xl poppins font-medium">
+                        Page Not Found
+                    </h2>
+                    <p
+                        class="text-lg md:text-xl poppins max-w-[600px] leading-relaxed"
+                    >
+                        {error ? error : "Sorry, we couldn't find the page you were looking for. The page might have been moved, deleted, or never existed."}
+                    </p>
+                    <a
+                        href="/"
+                        class="bg-black text-white px-6 py-3 rounded hover:opacity-90 font-bold"
+                        >Back to Home</a
+                    >
+                </div>
+            </Card>
+        </main>
+    </div>
+</Layout>
+
+<style>
+    .border-3 {
+        border-width: 3px;
+    }
+</style>

@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: 
+Host: https://connectclub.me/
+Sitemap: https://connectclub.me/sitemap-index.xml

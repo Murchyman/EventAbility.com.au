@@ -1,0 +1,245 @@
+---
+import Layout from "@layouts/Default.astro";
+import Card from "@components/generic/Card.astro";
+import { turso } from "src/lib/turso";
+import { getSignedUrlForFile } from "src/lib/s3";
+import { Image } from "astro:assets";
+
+if (!Astro.locals.user) {
+  return Astro.redirect("/signin");
+}
+
+interface ChatData {
+  user_id: number;
+  first_name: string;
+  age: number;
+  region: string;
+  last_message: string;
+  timestamp: string;
+  unread_count: number;
+}
+
+interface ChatWithProfilePicture extends ChatData {
+  profile_picture: string;
+}
+
+type DatabaseRow = {
+  user_id: number;
+  first_name: string;
+  age: number;
+  region: string;
+  last_message: string;
+  timestamp: string;
+  unread_count: number;
+};
+/**
+ * Fetches chat data for the current user, including the latest message and unread message count for each chat partner.
+ *
+ * The query consists of two main parts:
+ * 1. LatestMessages: Retrieves the latest message for each chat partner.
+ * 2. UnreadCounts: Calculates the number of unread messages from each chat partner.
+ *
+ * The final result includes:
+ * - User ID, first name, age, and region of the chat partner.
+ * - The latest message content and timestamp.
+ * - The count of unread messages from the chat partner.
+ *
+ * The results are ordered by the timestamp of the latest message in descending order.
+ *
+ * @param {Object} turso - The database client used to execute the query.
+ * @param {Object} Astro.locals.user.id - The ID of the current user, used to filter messages and calculate unread counts.
+ *
+ * @returns {Promise<Array>} - A promise that resolves to an array of chat data objects.
+ */
+
+const chatsData = await turso.execute({
+  sql: `
+    WITH LatestMessages AS (
+      SELECT 
+        CASE 
+          WHEN sender_id = ? THEN receiver_id 
+          ELSE sender_id 
+        END as chat_partner_id,
+        content as last_message,
+        timestamp,
+        ROW_NUMBER() OVER (
+          PARTITION BY 
+            CASE 
+              WHEN sender_id = ? THEN receiver_id 
+              ELSE sender_id 
+            END 
+          ORDER BY timestamp DESC
+        ) as rn
+      FROM messages 
+      WHERE (sender_id = ? OR receiver_id = ?)
+      AND EXISTS (
+        SELECT 1 FROM matches m 
+        WHERE ((m.user_id_1 = sender_id AND m.user_id_2 = receiver_id)
+        OR (m.user_id_1 = receiver_id AND m.user_id_2 = sender_id))
+        AND m.status = 'matched'
+        AND m.status != 'deleted'
+      )
+    ),
+    UnreadCounts AS (
+      SELECT 
+        CASE 
+          WHEN receiver_id = ? THEN sender_id 
+          ELSE receiver_id 
+        END as chat_partner_id,
+        COUNT(*) as unread_count
+      FROM messages
+      WHERE receiver_id = ?
+        AND read_at IS NULL
+      GROUP BY chat_partner_id
+    )
+    SELECT 
+      p.user_id,
+      p.first_name,
+      p.age,
+      p.region,
+      COALESCE(lm.last_message, 'No messages yet, send the first one!') as last_message,
+      lm.timestamp,
+      COALESCE(uc.unread_count, 0) as unread_count
+    FROM matches m
+    JOIN profile p ON p.user_id = CASE 
+                                    WHEN m.user_id_1 = ? THEN m.user_id_2 
+                                    ELSE m.user_id_1 
+                                  END
+    LEFT JOIN LatestMessages lm ON lm.chat_partner_id = p.user_id AND lm.rn = 1
+    LEFT JOIN UnreadCounts uc ON uc.chat_partner_id = p.user_id
+    WHERE (m.user_id_1 = ? OR m.user_id_2 = ?)
+    AND m.status = 'matched'
+    ORDER BY lm.timestamp DESC NULLS LAST
+  `,
+  args: [
+    Astro.locals.user.id,
+    Astro.locals.user.id,
+    Astro.locals.user.id,
+    Astro.locals.user.id,
+    Astro.locals.user.id,
+    Astro.locals.user.id,
+    Astro.locals.user.id,
+    Astro.locals.user.id,
+    Astro.locals.user.id,
+  ],
+});
+
+const chats: ChatWithProfilePicture[] = await Promise.all(
+  (chatsData.rows as unknown as DatabaseRow[]).map(
+    async (chat: DatabaseRow) => {
+      const profilePicture = await getSignedUrlForFile(
+        String(chat.user_id),
+        "profile-pictures",
+      );
+      return {
+        ...chat,
+        profile_picture: profilePicture,
+        unread_count: chat.unread_count,
+        last_message: chat.last_message || "Send the first message",
+      };
+    },
+  ),
+);
+
+try {
+  const url = new URL("/api/chat/recentChats", Astro.url.origin);
+  await fetch(url.toString()).catch((error) => {
+    console.error("Failed to fetch recent chats:", error);
+  });
+} catch (error) {
+  console.error("Error constructing URL:", error);
+}
+---
+
+<Layout
+  title="Social Spot | Messages"
+  description="Here you can see your conversations with other users"
+  classList="min-h-screen flex flex-col"
+  pageTitle="Social Spot | Messages"
+>
+  <main class="bg-[#B8E8FF] flex-grow px-6 py-12">
+    <div class="max-w-4xl mx-auto">
+      <Card>
+        <div class="p-6">
+          <h2 class="text-2xl font-bold tracking-tight mb-6 poppins">
+            Your Conversations
+          </h2>
+          {
+            chats.length === 0 ? (
+              <div class="text-center py-12">
+                <svg
+                  class="mx-auto h-16 w-16 text-gray-400 mb-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.5"
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                  />
+                </svg>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">
+                  No conversations yet
+                </h3>
+                <p class="text-gray-600 max-w-sm mx-auto">
+                  Attend some events and connect with people to start chatting!
+                  Your future conversations will appear here.
+                </p>
+              </div>
+            ) : (
+              <div class="space-y-4">
+                {chats.map((chat) => (
+                  <a
+                    href={`/chat/${chat.user_id}`}
+                    class="block bg-white rounded-lg p-4 hover:bg-gray-50 transition-colors border-2 border-black relative"
+                  >
+                    <div class="flex items-center gap-4">
+                      <Image
+                        src={String(chat.profile_picture)}
+                        alt={`${chat.first_name}'s profile picture`}
+                        class="w-12 h-12 rounded-full object-cover border-2 border-black"
+                        width={400}
+                        height={400}
+                      />
+                      <div class="flex-1 min-w-0">
+                        <h3 class="font-bold text-lg">{chat.first_name}</h3>
+                        <p class="text-sm text-gray-600">{chat.region}</p>
+                        <p class="text-sm text-gray-500 truncate">
+                          {chat.last_message}
+                        </p>
+                      </div>
+                      {chat.unread_count > 0 && (
+                        <span class="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">
+                          {chat.unread_count}
+                        </span>
+                      )}
+                    </div>
+                  </a>
+                ))}
+              </div>
+            )
+          }
+        </div>
+      </Card>
+    </div>
+  </main>
+
+  <script>
+    // Reload page when becoming visible again
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        const url = new URL(window.location.href);
+        url.searchParams.set("t", Date.now().toString());
+        window.location.href = url.toString();
+      }
+    });
+
+    // Force reload on navigation using the History API
+    window.addEventListener("popstate", () => {
+      window.location.reload();
+    });
+  </script>
+</Layout>

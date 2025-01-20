@@ -1,0 +1,205 @@
+---
+import Layout from "@layouts/Default.astro";
+import Card from "@components/generic/Card.astro";
+import { turso } from "src/lib/turso";
+import { Image } from "astro:assets";
+import { getSignedUrlForFile } from "src/lib/s3";
+const { slug } = Astro.params;
+const currentUserId = Astro.locals.user?.id;
+
+// Redirect to login if user is not authenticated
+if (!currentUserId) {
+  return Astro.redirect(
+    "/signin?redirect=" + encodeURIComponent(Astro.url.pathname),
+  );
+}
+
+if (!slug) {
+  throw new Error("Event ID is required");
+}
+
+// Get event details and check if user is registered
+const eventResult = await turso.execute({
+  sql: `
+    SELECT e.*, ep.joined_at 
+    FROM events e 
+    INNER JOIN event_participants ep 
+    ON e.event_id = ep.event_id 
+    WHERE e.event_id = ? AND ep.user_id = ?
+  `,
+  args: [slug, currentUserId],
+});
+
+// If no event found or user is not registered, redirect to events page
+if (eventResult.rows.length === 0) {
+  return Astro.redirect(
+    "/404?error=Event not found or you are not registered, please contact support if you think this is a mistake",
+  );
+}
+
+// Get user profile information
+const profileResult = await turso.execute({
+  sql: "SELECT first_name, age FROM profile WHERE user_id = ?",
+  args: [currentUserId],
+});
+
+const userProfile = profileResult.rows[0];
+const event = eventResult.rows[0];
+
+// Format the event date
+const eventDate = new Date(String(event.start_time));
+const formattedDate = new Intl.DateTimeFormat("en-US", {
+  // @ts-ignore
+  timeZone: event.timezone || "UTC",
+  weekday: "long",
+  month: "long",
+  day: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: true,
+}).format(eventDate);
+
+const profilePhoto = await getSignedUrlForFile(
+  currentUserId,
+  "profile-pictures",
+);
+---
+
+<Layout title="Event Ticket" description="Your event ticket">
+  <main class="min-h-screen bg-[#B8E8FF] p-4 md:p-6">
+    <div class="max-w-2xl mx-auto">
+      <Card>
+        <div class="p-6 space-y-8">
+          {/* Header */}
+          <div class="text-center">
+            <h1 class="text-3xl font-bold mb-2">Event Ticket</h1>
+            <p class="">Please show this ticket when you arrive at the event</p>
+          </div>
+
+          {/* User Info */}
+          <div class="border-t border-b border-gray-200 py-8">
+            <div class="flex flex-col items-center text-center">
+              <div
+                class="w-64 h-64 bg-gray-200 rounded-full overflow-hidden mb-4"
+              >
+                <Image
+                  src={profilePhoto}
+                  alt="Profile"
+                  width={256}
+                  height={256}
+                  class="w-full h-full object-cover"
+                />
+              </div>
+              <div class="space-y-1">
+                <h2 class="text-2xl font-bold">{userProfile?.first_name}</h2>
+                {
+                  userProfile?.age && (
+                    <p class=" text-lg">Age {userProfile.age}</p>
+                  )
+                }
+              </div>
+            </div>
+          </div>
+
+          {/* Event Details */}
+          <div class="space-y-4">
+            <div class="flex items-start gap-3">
+              <div class="w-6 h-6 mt-1 flex-shrink-0">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="w-full h-full"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"
+                  ></path>
+                </svg>
+              </div>
+              <div>
+                <p class="">Event</p>
+                <p class="font-bold">{event.name}</p>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-3">
+              <div class="w-6 h-6 mt-1 flex-shrink-0">
+                <svg
+                  viewBox="0 0 24 24"
+                  class="w-full h-full"
+                  fill="currentColor"
+                >
+                  <path
+                    d="M12 2C6.5 2 2 6.5 2 12C2 17.5 6.5 22 12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20ZM12.5 7H11V13L16.2 16.2L17 14.9L12.5 12.2V7Z"
+                  ></path>
+                </svg>
+              </div>
+              <div>
+                <p class="">Date & Time</p>
+                <p class="font-bold">{formattedDate}</p>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-3">
+              <div class="w-6 h-6 mt-1 flex-shrink-0">
+                <svg
+                  class="w-full h-full"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path
+                    d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zM7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 2.88-2.88 7.19-5 9.88C9.92 16.21 7 11.85 7 9z"
+                  ></path>
+                  <circle cx="12" cy="9" r="2.5"></circle>
+                </svg>
+              </div>
+              <div>
+                <p class="">Location</p>
+                <p class="font-bold">{event.location}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Important Notes */}
+          <div
+            class="bg-gradient-to-r from-[#FF5F1F]/10 to-[#FF8F1F]/10 rounded-lg p-6"
+          >
+            <h3 class="font-bold text-lg mb-3">Important Notes</h3>
+            <ul class="space-y-2 text-sm">
+              <li>• Bring a valid ID that matches your registration</li>
+              <li>
+                • To keep events comfortable for everyone, please don't ask for
+                numbers or social media during the event
+              </li>
+              <li>
+                • After the event, you'll be able to view profiles of other
+                attendees and send likes
+              </li>
+            </ul>
+          </div>
+
+          {/* Back Button */}
+          <div class="flex justify-center">
+            <a
+              href={`/events/${event.event_id}`}
+              class="inline-flex items-center gap-2 font-medium"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z"
+                  clip-rule="evenodd"></path>
+              </svg>
+              Back to Event
+            </a>
+          </div>
+        </div>
+      </Card>
+    </div>
+  </main>
+</Layout>

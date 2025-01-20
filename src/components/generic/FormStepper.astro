@@ -1,0 +1,128 @@
+---
+interface Props {
+    currentStep: number;
+    steps: {
+        title: string;
+        description: string;
+    }[];
+}
+
+const { currentStep, steps } = Astro.props;
+---
+
+<div class="w-full mb-8" id="form-stepper" data-currentstep={currentStep}>
+    <!-- Progress bar -->
+    <div class="relative">
+        <div
+            class="absolute top-1/2 left-0 right-0 h-1 bg-gray-200 -translate-y-1/2"
+        >
+        </div>
+        <div
+            class="absolute top-1/2 left-0 h-1 bg-[#FF5F1F] -translate-y-1/2 transition-all duration-300"
+            style={`width: ${(currentStep / (steps.length - 1)) * 100}%`}
+        >
+        </div>
+        <div class="relative flex justify-between">
+            {
+                steps.map((step, index) => (
+                    <div class="flex flex-col items-center">
+                        <div
+                            class={`w-8 h-8 rounded-full border-2 flex items-center justify-center relative z-10 transition-colors duration-300 ${
+                                index <= currentStep
+                                    ? "bg-[#FF5F1F] border-[#FF5F1F] text-white"
+                                    : "bg-white border-gray-300 text-gray-500"
+                            }`}
+                        >
+                            {index + 1}
+                        </div>
+                        <div class="mt-2 text-center">
+                            <p
+                                class={`text-sm font-medium ${index <= currentStep ? "text-[#FF5F1F]" : "text-gray-500"}`}
+                            >
+                                {step.title}
+                            </p>
+                            <p class="text-xs text-gray-500 hidden md:block max-w-[120px]">
+                                {step.description}
+                            </p>
+                        </div>
+                    </div>
+                ))
+            }
+        </div>
+    </div>
+</div>
+
+<script>
+    function updateStepper(stepper: HTMLElement, currentStep: number) {
+        const progressBar = stepper.querySelector(".bg-\\[\\#FF5F1F\\]");
+        const steps = stepper.querySelectorAll(".rounded-full");
+        const titles = stepper.querySelectorAll(".text-sm");
+        const totalSteps = steps.length - 1;
+
+        if (progressBar) {
+            progressBar.setAttribute(
+                "style",
+                `width: ${(currentStep / totalSteps) * 100}%`,
+            );
+        }
+
+        steps.forEach((step, index) => {
+            if (index <= currentStep) {
+                step.classList.add(
+                    "bg-[#FF5F1F]",
+                    "border-[#FF5F1F]",
+                    "text-white",
+                );
+                step.classList.remove(
+                    "bg-white",
+                    "border-gray-300",
+                    "text-gray-500",
+                );
+                titles[index].classList.add("text-[#FF5F1F]");
+                titles[index].classList.remove("text-gray-500");
+            } else {
+                step.classList.remove(
+                    "bg-[#FF5F1F]",
+                    "border-[#FF5F1F]",
+                    "text-white",
+                );
+                step.classList.add(
+                    "bg-white",
+                    "border-gray-300",
+                    "text-gray-500",
+                );
+                titles[index].classList.remove("text-[#FF5F1F]");
+                titles[index].classList.add("text-gray-500");
+            }
+        });
+    }
+
+    // Handle initial state and updates
+    function setupStepper() {
+        const stepper = document.getElementById("form-stepper");
+        if (!stepper) return;
+
+        // Set initial state
+        const currentStep = Number(stepper.dataset.currentstep || 0);
+        updateStepper(stepper, currentStep);
+
+        // Watch for changes
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (
+                    mutation.type === "attributes" &&
+                    mutation.attributeName === "data-currentstep"
+                ) {
+                    const newStep = Number(stepper.dataset.currentstep || 0);
+                    updateStepper(stepper, newStep);
+                }
+            });
+        });
+
+        observer.observe(stepper, { attributes: true });
+    }
+
+    // Setup on initial load and page transitions
+    setupStepper();
+    document.addEventListener("astro:page-load", setupStepper);
+</script>

@@ -1,0 +1,870 @@
+---
+import Layout from "@layouts/Default.astro";
+import Card from "@components/generic/Card.astro";
+import { turso } from "src/lib/turso";
+import { getSignedUrlForFile } from "src/lib/s3";
+import { Image } from "astro:assets";
+
+const { slug } = Astro.params;
+const currentUserId = Astro.locals.user?.id;
+
+// Redirect to login if user is not authenticated
+if (!currentUserId) {
+  return Astro.redirect('/signin?redirect=' + encodeURIComponent(Astro.url.pathname));
+}
+
+if (!slug) {
+  throw new Error("Slug is required");
+}
+
+// First check if event exists
+const eventExists = await turso.execute({
+  sql: "SELECT event_id, end_time FROM events WHERE event_id = ?;",
+  args: [slug],
+});
+
+if (eventExists.rows.length === 0) {
+  return new Response('Event not found', {
+    status: 404,
+  });
+}
+
+// Check if event is in matching period (within 7 days after end_time)
+const eventCheck = eventExists.rows[0];
+if (!eventCheck?.end_time) {
+  return new Response('Invalid event data', { status: 400 });
+}
+const eventEndTime = new Date(String(eventCheck.end_time));
+const now = new Date();
+const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+if (eventEndTime > now || eventEndTime <= oneWeekAgo) {
+  return Astro.redirect('/');
+  //return new Response('Event is not in matching period', { status: 400 });  
+}
+
+// Update SQL query to fetch email from user table
+// Query to get all participants for an event along with their profile info and match status
+// - Gets basic profile info (id, user_id, email, name, region, age, interests) 
+// - Gets event details (id, name, start/end time, location)
+// - Gets match status between current user and each participant (if they've matched)
+// - Gets who initiated the match (user_id_1) if one exists
+// - Excludes the current user from results
+// - Excludes deleted matches
+const data = await turso.execute({
+  sql: `SELECT 
+    p.id, p.user_id, u.email, p.first_name, p.region, p.age, p.interests, p.instagram_handle, 
+    e.event_id, e.name AS event_name, e.start_time AS event_date, e.location AS event_location,
+    (SELECT status FROM matches 
+     WHERE ((user_id_1 = ? AND user_id_2 = p.user_id) 
+     OR (user_id_1 = p.user_id AND user_id_2 = ?))
+     AND status != 'deleted'
+     ORDER BY created_at DESC
+     LIMIT 1
+    ) as match_status,
+    (SELECT user_id_1 FROM matches 
+     WHERE ((user_id_1 = ? AND user_id_2 = p.user_id) 
+     OR (user_id_1 = p.user_id AND user_id_2 = ?))
+     AND status != 'deleted'
+     ORDER BY created_at DESC
+     LIMIT 1
+    ) as match_initiator
+  FROM event_participants ep 
+  JOIN profile p ON ep.user_id = p.user_id 
+  JOIN "user" u ON p.user_id = u.id 
+  JOIN events e ON ep.event_id = e.event_id 
+  WHERE e.event_id = ? 
+  AND p.user_id != ?
+  AND NOT EXISTS (
+    SELECT 1 FROM matches m 
+    WHERE ((m.user_id_1 = ? AND m.user_id_2 = p.user_id) 
+    OR (m.user_id_1 = p.user_id AND m.user_id_2 = ?))
+    AND m.status = 'deleted'
+  );`,
+  args: [
+    currentUserId,
+    currentUserId,
+    currentUserId,
+    currentUserId,
+    slug,
+    currentUserId,
+    currentUserId,
+    currentUserId,
+  ],
+});
+
+const participants = data.rows;
+// Get event details separately with correct date field names
+const eventData = await turso.execute({
+  sql: "SELECT event_id, name AS event_name, start_time AS event_date, location AS event_location FROM events WHERE event_id = ?;",
+  args: [slug],
+});
+const event = participants[0] || eventData.rows[0];
+
+// append to participant object an image which is found by getting a presigned url based on the user_id
+for (let i = 0; i < participants.length; i++) {
+  const participant = participants[i];
+  const userId = String(participant.user_id || "");
+  const url = await getSignedUrlForFile(String(userId), "profile-pictures");
+  participants[i].image = String(url);
+}
+---
+
+<Layout
+  title="Social Spot | Event Participants"
+  description="Connect with other event attendees and make new friends"
+  classList="min-h-screen flex flex-col"
+  pageTitle="Social Spot | Event Participants"
+>
+  <script>
+    //@ts-ignore
+    import confetti from 'canvas-confetti';
+    //@ts-ignore
+    window.createConfetti = function(buttonRect:any) {
+      const origin = {
+        x: (buttonRect.left + buttonRect.width / 2) / window.innerWidth,
+        y: (buttonRect.top + buttonRect.height / 2) / window.innerHeight
+      };
+
+      // Fire confetti from the match button
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: origin,
+        colors: ['#FF69B4', '#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff'],
+        zIndex: 9999,
+      });
+
+      // Fire another burst after a small delay for extra effect
+      setTimeout(() => {
+        confetti({
+          particleCount: 50,
+          spread: 100,
+          origin: origin,
+          colors: ['#FF69B4', '#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff'],
+          zIndex: 9999,
+        });
+      }, 250);
+    }
+  </script>
+
+  <main class="bg-[#B8E8FF] flex-grow px-6 py-12">
+    <div class="max-w-6xl mx-auto space-y-8">
+      <Card>
+        <div class="p-8">
+          <div class="mb-8">
+            <h2 class="text-2xl font-bold tracking-tight poppins mb-4">
+              Meet Your Event Friends
+            </h2>
+            <div class="space-y-2">
+              <ul class="list-disc list-inside space-y-2">
+                <li>• Send friend requests to people you'd like to connect with</li>
+                <li>• Requests are private until both people want to connect</li>
+                <li>• Once connected, you can chat and plan future meetups!</li>
+              </ul>
+            </div>
+
+            <div class="text-gray-600 mb-8">
+              <p class="font-medium">{event?.event_name}</p>
+              <p class="text-sm">
+                <span data-date={event?.event_date}></span> • {event?.event_location}
+              </p>
+            </div>
+
+            {participants.length > 0 ? (
+              <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {participants.map((participant) => (
+                  <Card>
+                    <div class="h-full">
+                      <div class="relative pb-[90%] overflow-hidden rounded-t-lg">
+                        <Image
+                          src={String(participant.image)}
+                          alt={`${participant.first_name}'s profile picture`}
+                          class="absolute top-0 left-0 w-full h-full object-cover"
+                          width={800}
+                          height={800}
+                        />
+                      </div>
+
+                      <div class="p-4 bg-white rounded-b-lg min-h-[200px] flex flex-col">
+                        <div class="flex justify-between items-start">
+                          <div class="space-y-1">
+                            <h2 class="text-xl font-bold poppins text-gray-900">
+                              {participant.first_name}, {participant.age}
+                            </h2>
+                            <p class="text-gray-600 text-xs">
+                              {participant.region}
+                            </p>
+                            {participant.instagram_handle && (
+                              <a
+                                href={`https://instagram.com/${participant.instagram_handle}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="inline-flex items-center gap-1 text-xs text-[#E1306C] hover:text-[#C13584] mt-1"
+                              >
+                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                                </svg>
+                                @{participant.instagram_handle}
+                              </a>
+                            )}
+                          </div>
+
+                          <!-- Three-dot menu button - show for all users -->
+                          <div class="relative z-20">
+                            <button 
+                              class="actions-menu-btn p-2 hover:bg-gray-100 rounded-full transition-colors"
+                              aria-label="More actions"
+                              type="button"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                              </svg>
+                            </button>
+                            <div 
+                              class="actions-menu hidden absolute right-0 mt-2 py-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50"
+                              style="position: absolute;"
+                            >
+                              {participant.match_status === "matched" && (
+                                <button
+                                  type="button"
+                                  class="delete-match-btn w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 border-b border-gray-100"
+                                  data-user-id={participant.user_id}
+                                  data-user-name={participant.first_name}
+                                >
+                                  Remove Connection
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                class="report-btn w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                                data-user-id={participant.user_id}
+                                data-user-name={participant.first_name}
+                              >
+                                Report User
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="mt-2 mb-2 flex-grow">
+                          <div class="flex flex-wrap gap-1">
+                            {JSON.parse(String(participant.interests) || "[]").map((interest: string) => (
+                              <span class="inline-block px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full">
+                                {interest}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div class="mt-auto -mx-4 -mb-4 px-4 pb-4 space-y-2">
+                          <button
+                            class={[
+                              "match-btn w-full px-6 py-3 rounded-lg font-bold transition-all",
+                              {
+                                "bg-black text-white hover:opacity-90":
+                                  !participant.match_status ||
+                                  (participant.match_status === "pending" &&
+                                    participant.match_initiator !==
+                                      currentUserId),
+                                "bg-blue-500 text-white":
+                                  participant.match_status === "pending" &&
+                                  participant.match_initiator === currentUserId,
+                                "bg-green-500 text-white":
+                                  participant.match_status === "matched",
+                              },
+                            ]}
+                            data-user-id={participant.user_id}
+                            data-event-id={event.event_id}
+                            data-match-status={participant.match_status}
+                            data-match-initiator={participant.match_initiator}
+                            disabled={
+                              participant.match_status === "matched" ||
+                              (participant.match_status === "pending" &&
+                                participant.match_initiator === currentUserId)
+                            }
+                          >
+                            {participant.match_status === "matched"
+                              ? "Connected!"
+                              : participant.match_status === "pending" &&
+                                participant.match_initiator === currentUserId
+                              ? "Request Sent!"
+                              : "Connect"}
+                          </button>
+                          {participant.match_status === "matched" && (
+                            <a
+                              href={`/chat/${participant.user_id}`}
+                              class="block text-center bg-black text-white px-6 py-3 rounded-lg hover:opacity-90 font-bold  transition-all"
+                            >
+                              Chat with {participant.first_name}
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div class="text-center py-12">
+                <h3 class="text-xl font-medium text-gray-900 mb-2">No Participants</h3>
+                <p class="text-gray-600">
+                  No participants found for this event, this is probably a bug... email us plz!!
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </Card>
+
+      <div class="md:hidden">
+        <div class="text-gray-800 mb-8">
+          <h1 class="text-3xl font-bold tracking-tight mb-4 poppins">
+            Meet Your Event Friends
+          </h1>
+          <div class="mb-8">
+            <h2 class="text-lg tracking-tight mb-2 poppins font-medium">
+              How it works:
+            </h2>
+            <ul class="space-y-2">
+              <li>• Send friend requests to people you'd like to connect with</li>
+              <li>• Requests are private until both people want to connect</li>
+              <li>• Once connected, you can chat and plan future meetups!</li>
+            </ul>
+          </div>
+
+          <div class="mb-8">
+            <p class="font-medium">{event?.event_name}</p>
+            <p class="text-sm">
+              <span data-date={event?.event_date}></span> • {event?.event_location}
+            </p>
+          </div>
+        </div>
+
+        {participants.length > 0 ? (
+          <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {participants.map((participant) => (
+              <Card>
+                <div class="h-full">
+                  <div class="relative pb-[90%] overflow-hidden rounded-t-lg">
+                    <Image
+                      src={String(participant.image)}
+                      alt={`${participant.first_name}'s profile picture`}
+                      class="absolute top-0 left-0 w-full h-full object-cover"
+                      width={800}
+                      height={800}
+                    />
+                  </div>
+
+                  <div class="p-4 bg-white rounded-b-lg min-h-[200px] flex flex-col">
+                    <div class="flex justify-between items-start">
+                      <div class="space-y-1">
+                        <h2 class="text-xl font-bold poppins text-gray-900">
+                          {participant.first_name}, {participant.age}
+                        </h2>
+                        <p class="text-gray-600 text-xs">
+                          {participant.region}
+                        </p>
+                        {participant.instagram_handle && (
+                          <a
+                            href={`https://instagram.com/${participant.instagram_handle}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="inline-flex items-center gap-1 text-xs text-[#E1306C] hover:text-[#C13584] mt-1"
+                          >
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                            </svg>
+                            @{participant.instagram_handle}
+                          </a>
+                        )}
+                      </div>
+
+                      <!-- Three-dot menu button - show for all users -->
+                      <div class="relative z-20">
+                        <button 
+                          class="actions-menu-btn p-2 hover:bg-gray-100 rounded-full transition-colors"
+                          aria-label="More actions"
+                          type="button"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                          </svg>
+                        </button>
+                        <div 
+                          class="actions-menu hidden absolute right-0 mt-2 py-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50"
+                          style="position: absolute;"
+                        >
+                          {participant.match_status === "matched" && (
+                            <button
+                              type="button"
+                              class="delete-match-btn w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 border-b border-gray-100"
+                              data-user-id={participant.user_id}
+                              data-user-name={participant.first_name}
+                            >
+                              Remove Connection
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            class="report-btn w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                            data-user-id={participant.user_id}
+                            data-user-name={participant.first_name}
+                          >
+                            Report User
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="mt-2 mb-2 flex-grow">
+                      <div class="flex flex-wrap gap-1">
+                        {JSON.parse(String(participant.interests) || "[]").map((interest: string) => (
+                          <span class="inline-block px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full">
+                            {interest}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div class="mt-auto -mx-4 -mb-4 px-4 pb-4 space-y-2">
+                      <button
+                        class={[
+                          "match-btn w-full px-6 py-3 rounded-lg font-bold transition-all",
+                          {
+                            "bg-black text-white hover:opacity-90":
+                              !participant.match_status ||
+                              (participant.match_status === "pending" &&
+                                participant.match_initiator !==
+                                  currentUserId),
+                            "bg-blue-500 text-white":
+                              participant.match_status === "pending" &&
+                              participant.match_initiator === currentUserId,
+                            "bg-green-500 text-white":
+                              participant.match_status === "matched",
+                          },
+                        ]}
+                        data-user-id={participant.user_id}
+                        data-event-id={event.event_id}
+                        data-match-status={participant.match_status}
+                        data-match-initiator={participant.match_initiator}
+                        disabled={
+                          participant.match_status === "matched" ||
+                          (participant.match_status === "pending" &&
+                            participant.match_initiator === currentUserId)
+                        }
+                      >
+                        {participant.match_status === "matched"
+                          ? "Connected!"
+                          : participant.match_status === "pending" &&
+                            participant.match_initiator === currentUserId
+                          ? "Request Sent!"
+                          : "Connect"}
+                      </button>
+                      {participant.match_status === "matched" && (
+                        <a
+                          href={`/chat/${participant.user_id}`}
+                          class="block text-center bg-black text-white px-6 py-3 rounded-lg hover:opacity-90 font-bold  transition-all"
+                        >
+                          Chat with {participant.first_name}
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div class="text-center py-12 bg-white rounded-lg">
+            <h3 class="text-xl font-medium text-gray-900 mb-2">No Participants</h3>
+            <p class="text-gray-600">
+                  No participants found for this event, this is probably a bug... email us plz!!
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  </main>
+
+  <!-- Report Modal -->
+  <div
+    id="reportModal"
+    class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center"
+    style="display: none;"
+  >
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+      <!-- Add success message -->
+      <div
+        id="successMessage"
+        class="hidden mb-4 p-4 bg-green-100 text-green-700 rounded-lg"
+      >
+        Report submitted successfully
+      </div>
+
+      <h2 class="text-xl font-bold mb-4">
+        Report User: <span id="reportUserName"></span>
+        <!-- Fix typo in ID -->
+      </h2>
+      <form id="reportForm" class="space-y-4">
+        <input type="hidden" id="reportUserId" name="reportUserId" />
+        <!-- Fix typo in ID -->
+        <div>
+          <label
+            for="reportReason"
+            class="block text-sm font-medium text-gray-700 mb-1"
+            >Reason for report</label
+          >
+          <textarea
+            id="reportReason"
+            name="reportReason"
+            rows="4"
+            class="w-full border rounded-lg p-2"
+            required></textarea>
+        </div>
+        <div class="flex justify-end space-x-2">
+          <button
+            type="button"
+            id="cancelReport"
+            class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+          >
+            Submit Report
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete Match Modal -->
+  <div
+    id="deleteMatchModal"
+    class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center"
+    style="display: none;"
+  >
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+      <h2 class="text-xl font-bold mb-4">
+        Remove Connection with <span id="deleteMatchUserName"></span>?
+      </h2>
+      <p class="text-gray-600 mb-4">
+        This will remove the connection and chat history will no longer be available.
+        This action cannot be undone.
+      </p>
+      <div class="flex justify-end space-x-2">
+        <button
+          type="button"
+          id="cancelDelete"
+          class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          id="confirmDelete"
+          class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+          data-user-id=""
+        >
+          Remove
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .actions-menu {
+      transform-origin: top right;
+      transition: all 0.2s ease-in-out;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    }
+    
+    .actions-menu:not(.hidden) {
+      display: block;
+      opacity: 1;
+    }
+
+    .match-btn:not(:disabled):hover {
+      transform: translateY(1px);
+    }
+  </style>
+</Layout>
+
+<script define:vars={{ currentUserId }}>
+  function createChatButton(userId, firstName) {
+    const chatButton = document.createElement("a");
+    chatButton.href = `/chat/${userId}`;
+    chatButton.className =
+      "block text-center bg-black text-white px-6 py-3 rounded-lg hover:opacity-90 font-bold transition-all";
+    chatButton.textContent = `Chat with ${firstName}`;
+    return chatButton;
+  }
+
+  document.querySelectorAll(".match-btn").forEach((button) => {
+    button.addEventListener("click", async (e) => {
+      const btn = e.currentTarget;
+      try {
+        btn.disabled = true;
+        btn.textContent = "Connecting...";
+
+        const formData = new FormData();
+        formData.append("user_id_1", currentUserId);
+        formData.append("user_id_2", btn.dataset.userId);
+        formData.append("event_id", btn.dataset.eventId);
+
+        const response = await fetch("/api/match", {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Failed to connect");
+
+        btn.classList.remove("bg-pink-500", "hover:bg-pink-600");
+
+        if (data.status === "matched") {
+          btn.textContent = "Connected!";
+          btn.classList.add("bg-green-500", "text-white");
+
+          // Get the parent div containing the buttons
+          const buttonContainer = btn.parentElement;
+          // Get the first name from the card
+          const firstName = buttonContainer
+            .closest(".h-full")
+            .querySelector(".text-xl")
+            .textContent.split(",")[0];
+          // Create and append chat button
+          const chatButton = createChatButton(btn.dataset.userId, firstName);
+          buttonContainer.appendChild(chatButton);
+
+          // Call the confetti function from the window object
+          window.createConfetti(btn.getBoundingClientRect());
+        } else if (data.status === "pending") {
+          btn.textContent = "Request Sent!";
+          btn.classList.add("bg-blue-500");
+        } else {
+          // Handle already_exists case
+          btn.textContent =
+            data.status === "already_exists" ? "Request Sent!" : "Connected!";
+          btn.classList.add(
+            data.status === "already_exists" ? "bg-blue-500" : "bg-green-500"
+          );
+        }
+      } catch (error) {
+        console.error("Connection error:", error);
+        btn.disabled = false;
+        btn.textContent = "Connect";
+      }
+    });
+  });
+
+  // Report functionality
+  const reportModal = document.getElementById("reportModal");
+  const reportForm = document.getElementById("reportForm");
+  const reportUserName = document.getElementById("reportUserName"); // IDs now match
+  const reportUserId = document.getElementById("reportUserId"); // IDs now match
+  const successMessage = document.getElementById("successMessage");
+
+  function showModal() {
+    reportModal.style.display = "flex";
+    reportModal.classList.remove("hidden");
+  }
+
+  function hideModal() {
+    reportModal.style.display = "none";
+    reportModal.classList.add("hidden");
+  }
+
+  function showSuccessMessage() {
+    successMessage.classList.remove("hidden");
+    // Hide success message after 2 seconds then close modal
+    setTimeout(() => {
+      successMessage.classList.add("hidden");
+      hideModal();
+      reportForm.reset();
+    }, 2000);
+  }
+
+  document.querySelectorAll(".report-btn").forEach((button) => {
+    button.addEventListener("click", () => {
+      showModal();
+      reportUserName.textContent = button.dataset.userName;
+      reportUserId.value = button.dataset.userId; // Now correctly maps to the hidden input
+    });
+  });
+
+  cancelReport.addEventListener("click", () => {
+    hideModal();
+    reportForm.reset();
+  });
+
+  reportForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    try {
+      const formData = new FormData(reportForm);
+      formData.append("reportedBy", currentUserId);
+
+      const response = await fetch("/api/report", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error("Failed to submit report");
+
+      showSuccessMessage();
+    } catch (error) {
+      console.error("Report error:", error);
+      alert("Failed to submit report. Please try again.");
+    }
+  });
+
+  // Add click outside functionality
+  reportModal.addEventListener("click", (e) => {
+    if (e.target === reportModal) {
+      hideModal();
+      reportForm.reset();
+    }
+  });
+
+  // Add escape key functionality
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      hideModal();
+      reportForm.reset();
+    }
+  });
+
+  // Add delete match functionality
+  const deleteMatchModal = document.getElementById("deleteMatchModal");
+  const deleteMatchUserName = document.getElementById("deleteMatchUserName");
+  const cancelDelete = document.getElementById("cancelDelete");
+  const confirmDelete = document.getElementById("confirmDelete");
+
+  function showDeleteModal() {
+    deleteMatchModal.style.display = "flex";
+    deleteMatchModal.classList.remove("hidden");
+  }
+
+  function hideDeleteModal() {
+    deleteMatchModal.style.display = "none";
+    deleteMatchModal.classList.add("hidden");
+  }
+
+  document.querySelectorAll(".delete-match-btn").forEach((button) => {
+    button.addEventListener("click", () => {
+      const userId = button.dataset.userId;
+      const userName = button.dataset.userName;
+      deleteMatchUserName.textContent = userName;
+      confirmDelete.dataset.userId = userId;
+      showDeleteModal();
+    });
+  });
+
+  cancelDelete.addEventListener("click", hideDeleteModal);
+
+  confirmDelete.addEventListener("click", async () => {
+    try {
+      const userId = confirmDelete.dataset.userId;
+      const formData = new FormData();
+      formData.append("user_id_1", currentUserId);
+      formData.append("user_id_2", userId);
+
+      const response = await fetch("/api/deleteMatch", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to delete match");
+      }
+
+      if (data.status === "success") {
+        // Just reload the page to show updated state
+        location.reload();
+      } else {
+        throw new Error(data.message || "Failed to delete match");
+      }
+
+      hideDeleteModal();
+    } catch (error) {
+      console.error("Delete match error:", error);
+      alert(error.message || "Failed to delete match. Please try again.");
+      hideDeleteModal();
+    }
+  });
+
+  // Add dropdown menu functionality
+  document.querySelectorAll('.actions-menu-btn').forEach(button => {
+    const menu = button.nextElementSibling;
+    
+    button.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Close all other menus
+      document.querySelectorAll('.actions-menu').forEach(m => {
+        if (m !== menu) {
+          m.classList.add('hidden');
+        }
+      });
+      
+      // Toggle current menu
+      menu.classList.toggle('hidden');
+    });
+  });
+
+  // Close menus when clicking anywhere
+  document.addEventListener('click', (e) => {
+    const target = e.target;
+    
+    if (!target.closest('.actions-menu') && !target.closest('.actions-menu-btn')) {
+      document.querySelectorAll('.actions-menu').forEach(menu => {
+        menu.classList.add('hidden');
+      });
+    }
+  });
+
+  // Close modals and menus on escape key
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      hideDeleteModal();
+      document.querySelectorAll('.actions-menu').forEach(menu => {
+        menu.classList.add('hidden');
+      });
+    }
+  });
+
+  // Format all dates
+  document.querySelectorAll('[data-date]').forEach(element => {
+    const date = new Date(element.dataset.date);
+    element.textContent = date.toLocaleDateString(undefined, {
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  });
+</script>
+
+<style>
+  .actions-menu {
+    transform-origin: top right;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  }
+  
+  .actions-menu:not(.hidden) {
+    display: block;
+    opacity: 1;
+  }
+
+  .match-btn:not(:disabled):hover {
+    transform: translateY(1px);
+  }
+</style>

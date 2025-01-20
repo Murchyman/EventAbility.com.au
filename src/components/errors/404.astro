@@ -1,0 +1,20 @@
+---
+import Card from "@components/generic/Card.astro";
+import RainbowButton from "@components/generic/RainbowButton.astro";
+---
+
+<Card>
+  <div class="flex flex-col items-center gap-8 py-8 px-4 text-center">
+    <h1 class="text-8xl md:text-9xl font-extrabold poppins tracking-tight">
+      404
+    </h1>
+    <h2 class="text-3xl md:text-4xl poppins font-medium">Page Not Found</h2>
+    <p class="text-lg md:text-xl poppins max-w-[600px] leading-relaxed">
+      Sorry, we couldn't find the page you were looking for. The page might have
+      been moved, deleted, or never existed.
+    </p>
+    <div class="flex gap-4 justify-center">
+      <RainbowButton href="/">&larr; Back to Home</RainbowButton>
+    </div>
+  </div>
+</Card>

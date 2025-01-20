@@ -1,0 +1,162 @@
+---
+import interestsData from "src/assets/interests.json";
+
+interface Props {
+  initialInterests?: string;
+}
+
+const {
+  initialInterests = "[]",
+ 
+} = Astro.props;
+---
+
+<label class="flex flex-col gap-2">
+
+  <div class="relative">
+    <input
+      type="text"
+      id="interest-search"
+      class="w-full p-2 border-2 border-black rounded mb-2"
+      placeholder="Search interests..."
+    />
+    <div
+      id="interest-suggestions"
+      class="hidden absolute z-10 w-full bg-white border-2 border-black rounded mt-1 max-h-40 overflow-y-auto"
+    >
+    </div>
+    <div id="selected-interests" class="flex flex-wrap gap-2 mb-2">
+      {
+        JSON.parse(initialInterests).map((interest: string) => (
+          <button
+            type="button"
+            class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full flex items-center gap-1 remove-interest hover:bg-blue-200"
+            data-interest={interest}
+          >
+            {interest}
+            <span class="ml-1">×</span>
+          </button>
+        ))
+      }
+    </div>
+    <input
+      type="hidden"
+      name="interests"
+      id="interests-input"
+      value={initialInterests}
+    />
+  </div>
+</label>
+
+<script define:vars={{ commonInterests: interestsData.interests }}>
+  // Interest suggestion logic
+  const interestSearch = document.getElementById("interest-search");
+  const interestSuggestions = document.getElementById("interest-suggestions");
+  const selectedInterests = document.getElementById("selected-interests");
+  const interestsInput = document.getElementById("interests-input");
+
+  let currentInterests = new Set(JSON.parse(interestsInput.value));
+
+  // Initialize the search box state based on the number of selected interests
+  if (currentInterests.size >= 7) {
+    interestSearch.disabled = true;
+    interestSearch.placeholder = "Maximum interests reached (7)";
+  }
+
+  function updateInterests() {
+    selectedInterests.innerHTML = "";
+    interestsInput.value = JSON.stringify(Array.from(currentInterests));
+
+    currentInterests.forEach((interest) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className =
+        "bg-blue-100 text-blue-800 px-3 py-1 rounded-full flex items-center gap-1 remove-interest hover:bg-blue-200";
+      button.dataset.interest = interest;
+      button.innerHTML = `
+        ${interest}
+        <span class="ml-1">×</span>
+      `;
+      selectedInterests.appendChild(button);
+    });
+
+    // Update the search box state after updating interests
+    if (currentInterests.size >= 7) {
+      interestSearch.disabled = true;
+      interestSearch.placeholder = "Maximum interests reached (7)";
+    } else {
+      interestSearch.disabled = false;
+      interestSearch.placeholder = "Search interests...";
+    }
+  }
+
+  interestSearch.addEventListener("input", (e) => {
+    const search = e.target.value.toLowerCase();
+    if (!search || currentInterests.size >= 7) {
+      interestSuggestions.classList.add("hidden");
+      // Remove red outline if previously added
+      interestSuggestions.classList.remove("border-red-500");
+      return;
+    }
+
+    const suggestions = commonInterests.filter(
+      (interest) =>
+        !currentInterests.has(interest) &&
+        interest.toLowerCase().includes(search),
+    );
+
+    if (suggestions.length > 0) {
+      interestSuggestions.innerHTML = suggestions
+        .map(
+          (interest) => `
+        <div class="p-2 hover:bg-gray-100 cursor-pointer suggestion">${interest}</div>
+      `,
+        )
+        .join("");
+      interestSuggestions.classList.remove("hidden");
+      // Remove red outline if previously added
+      interestSuggestions.classList.remove("border-red-500");
+    } else {
+      interestSuggestions.innerHTML = `<div class="p-2 text-red-500">No interests found</div>`;
+      interestSuggestions.classList.remove("hidden");
+      // Add red outline to indicate no results
+      interestSuggestions.classList.add("border-red-500");
+    }
+  });
+
+  interestSuggestions.addEventListener("click", (e) => {
+    const suggestion = e.target.closest(".suggestion");
+    if (suggestion && currentInterests.size < 7) {
+      const interest = suggestion.textContent;
+      currentInterests.add(interest);
+      updateInterests();
+      interestSearch.value = "";
+      interestSuggestions.classList.add("hidden");
+
+      if (currentInterests.size >= 7) {
+        interestSearch.disabled = true;
+        interestSearch.placeholder = "Maximum interests reached (7)";
+      }
+    }
+  });
+
+  selectedInterests.addEventListener("click", (e) => {
+    const target = e.target.closest(".remove-interest");
+    if (target) {
+      currentInterests.delete(target.dataset.interest);
+      updateInterests();
+      // Re-enable search if we're below the limit
+      if (currentInterests.size < 7) {
+        interestSearch.disabled = false;
+        interestSearch.placeholder = "Search interests...";
+      }
+    }
+  });
+
+  // Hide suggestions when clicking outside
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest("#interest-search")) {
+      interestSuggestions.classList.add("hidden");
+    }
+  });
+</script>

@@ -1,0 +1,77 @@
+---
+interface Props {
+    href?: string;
+    class?: string;
+}
+
+const { href, class: className = "" } = Astro.props;
+---
+
+{
+    href ? (
+        <a
+            href={href}
+            class={`rainbow-button text-black px-6 py-3 rounded hover:opacity-90 font-bold inline-flex items-center gap-2 ${className}`}
+        >
+            <span class="button-text">
+                <slot />
+            </span>
+        </a>
+    ) : (
+        <button
+            class={`rainbow-button text-black px-6 py-3 rounded hover:opacity-90 font-bold inline-flex items-center gap-2 ${className}`}
+        >
+            <span class="button-text">
+                <slot />
+            </span>
+        </button>
+    )
+}
+
+<style>
+    .rainbow-button {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: repeating-linear-gradient(
+            45deg,
+            #ff66cc 0%,
+            #ff66cc 20%,
+            #bb66ff 20%,
+            #bb66ff 40%,
+            #33ddff 40%,
+            #33ddff 60%,
+            #ffdd33 60%,
+            #ffdd33 80%,
+            #33ffbb 80%,
+            #33ffbb 100%
+        );
+        border: 2px solid black;
+        box-shadow: 4px 4px 0px black;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .rainbow-button:hover {
+        transform: translate(-1px, -1px);
+        box-shadow: 5px 5px 0px black;
+    }
+
+    .button-text {
+        position: relative;
+        z-index: 1;
+        text-shadow:
+            -1.5px -1.5px 0 white,
+            1.5px -1.5px 0 white,
+            -1.5px 1.5px 0 white,
+            1.5px 1.5px 0 white,
+            0 0 8px rgba(255, 255, 255, 0.9);
+        letter-spacing: 0.5px;
+        padding: 0 0.5rem;
+        /* background: rgba(255, 255, 255, 0.25); */
+        border-radius: 4px;
+        -webkit-font-smoothing: antialiased;
+        font-weight: 900;
+    }
+</style>

@@ -1,0 +1,1037 @@
+---
+import Layout from "@layouts/Default.astro";
+import Card from "@components/generic/Card.astro";
+import FormStepper from "@components/generic/FormStepper.astro";
+import { turso } from "src/lib/turso";
+import InterestsSelector from "@components/generic/InterestsSelector.astro";
+
+// Check if user is logged in
+const user = Astro.locals.user;
+
+// Get event details if eventId exists
+const eventId = new URL(Astro.request.url).searchParams.get("event");
+let eventDetails;
+if (eventId) {
+  const result = await turso.execute({
+    sql: "SELECT name, start_time, location FROM events WHERE event_id = ?",
+    args: [eventId],
+  });
+  eventDetails = result.rows[0];
+}
+
+// Format date if event exists
+let formattedDate = "";
+if (eventDetails) {
+  const startTime = String(eventDetails[1]);
+  const date = startTime ? new Date(startTime) : new Date();
+  formattedDate = date.toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+const steps = [
+  {
+    title: "Account",
+    description: "Create your login",
+  },
+  {
+    title: "Photo",
+    description: "Add your photo",
+  },
+  {
+    title: "Profile",
+    description: "Basic information",
+  },
+  {
+    title: "Interests",
+    description: "What you like",
+  },
+  {
+    title: "Review",
+    description: "Finish setup",
+  },
+];
+---
+
+<Layout
+  title="Social Spot | Register"
+  pageTitle="Social Spot | Register"
+  description="This is where you create your account and profile for Social Spot."
+>
+  <!-- Add Croppie CSS and JS in the head -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.css"
+  />
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.js"
+  ></script>
+
+  <style>
+    input[type="password"]::-ms-reveal,
+    input[type="password"]::-ms-clear,
+    input[type="password"]::-webkit-contacts-auto-fill-button,
+    input[type="password"]::-webkit-credentials-auto-fill-button {
+      display: none !important;
+    }
+
+    #toggle-password {
+      padding: 0.5rem;
+      font-size: 1rem;
+    }
+
+    @media (max-width: 640px) {
+      #toggle-password {
+        padding: 0.75rem;
+        font-size: 1.25rem;
+      }
+    }
+
+    input,
+    select {
+      background-color: white;
+    }
+
+    #cropModal {
+      display: none;
+    }
+
+    #cropModal.active {
+      display: flex;
+    }
+
+    .brutal-card {
+      @apply bg-white;
+      filter: none;
+      border: none;
+      padding: 0;
+    }
+
+    .brutal-card > div {
+      @apply transition-transform hover:scale-[1.02];
+    }
+
+    .form-step {
+      display: none;
+    }
+
+    .form-step.active {
+      display: block;
+    }
+  </style>
+
+  <main class="bg-[#B8E8FF] p-6">
+    <section class="grid md:grid-cols-8 gap-8 mt-4">
+      {
+        (() => {
+          const eventId = new URL(Astro.request.url).searchParams.get("event");
+          return (
+            eventId &&
+            eventDetails && (
+              <div class="col-span-8 md:col-start-3 md:col-span-4">
+                <Card>
+                  <div class="p-6 text-center">
+                    <h2 class="text-2xl md:text-3xl font-bold poppins mb-6">
+                      Ready to Join This Event?
+                    </h2>
+                    <div class="mb-6 p-4 bg-gray-50 rounded-lg border-2 border-black">
+                      <h3 class="text-xl font-semibold poppins mb-3">
+                        {eventDetails[0]}
+                      </h3>
+                      <p class=" mb-2">{formattedDate}</p>
+                      <p class="">{eventDetails[2]}</p>
+                    </div>
+                    <p class="text-lg mb-6">
+                      Create a profile and you're all set!
+                    </p>
+                    <a
+                      href={`/signin${Astro.url.search}`}
+                      class="inline-block px-6 py-3 bg-[#FF5F1F] text-white rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-[#FF5F1F]/90 transition-all"
+                    >
+                      Already have an account? Sign in here
+                    </a>
+                  </div>
+                </Card>
+              </div>
+            )
+          );
+        })()
+      }
+      <div class="col-span-8 md:col-start-3 md:col-span-4">
+        <Card>
+          <div class="space-y-6">
+            <div class="text-center">
+              <h1 class="text-2xl font-bold poppins mb-2">
+                Create Your Profile
+              </h1>
+              <p class="text-gray-600 mb-8">
+                Tell us about yourself and get started connecting with others.
+                Already have an account? <a
+                  href={`/signin${Astro.url.search}`}
+                  class="underline hover:text-black/70 font-medium">Sign in</a
+                >
+              </p>
+            </div>
+
+            <FormStepper currentStep={0} steps={steps} />
+
+            <form
+              class="space-y-8"
+              action="/api/createProfile"
+              method="POST"
+              enctype="multipart/form-data"
+              id="registrationForm"
+            >
+              <!-- Step 1: Account -->
+              <div class="form-step active" data-step="1">
+                <h2 class="text-xl font-semibold poppins mb-4">
+                  Account Details
+                </h2>
+                <div class="space-y-4">
+                  <div class="space-y-2">
+                    <label for="email" class="text-lg font-medium">Email</label>
+                    <input
+                      type="email"
+                      name="email"
+                      id="email"
+                      required
+                      onblur="this.value = this.value.trim()"
+                      class="w-full h-12 bg-white/90 border-2 border-black rounded-xl text-lg px-3"
+                    />
+                  </div>
+                  <div class="space-y-2">
+                    <label for="password" class="text-lg font-medium"
+                      >Password</label
+                    >
+                    <div class="relative">
+                      <input
+                        type="password"
+                        name="password"
+                        id="password"
+                        required
+                        class="w-full h-12 bg-white/90 border-2 border-black rounded-xl text-lg px-3"
+                      />
+                      <button
+                        type="button"
+                        id="toggle-password"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-600 hover:text-gray-900"
+                        aria-label="Toggle password visibility"
+                      >
+                        Show
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Step 2: Profile Photo -->
+              <div class="form-step" data-step="2">
+                <h2 class="text-xl font-semibold poppins mb-4">
+                  Profile Photo
+                </h2>
+                <div class="brutal-card">
+                  <div
+                    class="relative aspect-square w-full max-w-[240px] mx-auto overflow-hidden rounded-xl border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-gray-100"
+                  >
+                    <div
+                      class="absolute inset-0 flex items-center justify-center"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-24 w-24 text-gray-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        ></path>
+                      </svg>
+                    </div>
+                    <img
+                      id="profile-preview"
+                      src=""
+                      alt="Profile Photo Preview"
+                      class="absolute top-0 left-0 w-full h-full object-cover opacity-0"
+                    />
+                  </div>
+                </div>
+
+                <div class="text-center space-y-3 mt-4">
+                  <div class="relative inline-block">
+                    <input
+                      type="file"
+                      name="profile_photo"
+                      id="profile_photo"
+                      accept="image/*"
+                      class="hidden"
+                    />
+                    <button
+                      type="button"
+                      onclick="document.getElementById('profile_photo').click()"
+                      class="flex items-center gap-2 px-6 py-3 bg-[#FF5F1F] hover:bg-[#FF5F1F]/90 text-white rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-transform active:translate-y-1 active:shadow-[0px_0px_0px_0px_rgba(0,0,0,1)]"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                        ></path>
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                      </svg>
+                      <span id="photoButtonText">Add Photo</span>
+                    </button>
+                  </div>
+                  <div id="photo-error" class="hidden">
+                    <p
+                      class="p-4 text-red-600 text-lg border-2 border-red-600 rounded-lg bg-red-50 flex items-center gap-2"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-6 w-6"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        ></path>
+                      </svg>
+                      <span></span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Step 3: Basic Info -->
+              <div class="form-step" data-step="3">
+                <h2 class="text-xl font-semibold poppins mb-4">
+                  Basic Information
+                </h2>
+                <div class="space-y-4">
+                  <label class="flex flex-col gap-2">
+                    <span class="text-lg font-medium">First Name</span>
+                    <input
+                      type="text"
+                      name="first_name"
+                      required
+                      maxlength="25"
+                      onblur="this.value = this.value.trim()"
+                      class="p-2 border-2 border-black rounded"
+                    />
+                    <p class="text-xs text-gray-500">Maximum 25 characters</p>
+                  </label>
+
+                  <label class="flex flex-col gap-2">
+                    <span class="text-lg font-medium">Age</span>
+                    <input
+                      type="number"
+                      name="age"
+                      required
+                      class="p-2 border-2 border-black rounded"
+                    />
+                  </label>
+                  <div id="age-error" class="hidden text-red-600 text-sm">
+                    Age must be between 18 and 120.
+                  </div>
+
+                  <label class="flex flex-col gap-2">
+                    <span class="text-lg font-medium"
+                      >Instagram Handle (optional)</span
+                    >
+                    <div class="relative">
+                      <span
+                        class="absolute left-3 top-1/2 -translate-y-1/2 text-[#E1306C]"
+                        >@</span
+                      >
+                      <input
+                        type="text"
+                        name="instagram_handle"
+                        pattern="^[a-zA-Z0-9._]{1,30}$"
+                        class="p-2 pl-8 border-2 border-black rounded w-full"
+                        title="Please enter a valid Instagram handle without the @ symbol"
+                      />
+                    </div>
+                    <p class="text-xs text-gray-500">
+                      Enter without the @ symbol
+                    </p>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Step 4: Interests -->
+              <div class="form-step" data-step="4">
+                <h2 class="text-xl font-semibold poppins mb-4">
+                  Your Interests
+                </h2>
+                <p class="text-sm text-gray-600 mb-4">
+                  Add your interests and hobbies - this helps people get to know
+                  you and find common ground!
+                </p>
+                <InterestsSelector />
+              </div>
+
+              <!-- Step 5: Review -->
+              <div class="form-step" data-step="5">
+                <h2 class="text-xl font-semibold poppins mb-4">
+                  Review Your Profile
+                </h2>
+                <div class="space-y-6">
+                  <div id="review-content" class="space-y-4">
+                    <!-- Content will be populated by JavaScript -->
+                  </div>
+
+                  <div class="space-y-2">
+                    <label class="flex items-start gap-2">
+                      <input
+                        type="checkbox"
+                        name="agreement"
+                        id="agreement"
+                        required
+                        class="mt-1"
+                      />
+                      <span class="text-sm">
+                        I agree to the
+                        <a
+                          href="/privacy"
+                          class="text-[#FF5F1F] hover:underline"
+                          target="_blank"
+                          rel="noopener noreferrer">Privacy Policy</a
+                        >
+                        and
+                        <a
+                          href="/terms"
+                          class="text-[#FF5F1F] hover:underline"
+                          target="_blank"
+                          rel="noopener noreferrer">Terms of Use</a
+                        >
+                        and I am at least 18 years old.
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Navigation Buttons -->
+              <div class="flex justify-between gap-4">
+                <button
+                  type="button"
+                  id="prevStep"
+                  class="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-gray-200 transition-all hidden"
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  id="nextStep"
+                  class="flex-1 px-6 py-3 bg-[#FF5F1F] text-white rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-[#FF5F1F]/90 transition-all"
+                >
+                  Next
+                </button>
+                <button
+                  type="submit"
+                  id="submitButton"
+                  class="hidden flex-1 px-6 py-3 bg-[#FF5F1F] text-white rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-[#FF5F1F]/90 transition-all"
+                >
+                  <span id="submitText">Create Account</span>
+                  <div id="loadingSpinner" class="hidden">
+                    <svg
+                      class="animate-spin h-5 w-5"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        class="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        stroke-width="4"></circle>
+                      <path
+                        class="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                  </div>
+                </button>
+              </div>
+
+              <!-- Form Messages -->
+              <div id="form-error" class="hidden">
+                <p
+                  class="p-4 text-red-600 text-lg border-2 border-red-600 rounded-lg bg-red-50 flex items-center gap-2"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    ></path>
+                  </svg>
+                  <span></span>
+                </p>
+              </div>
+            </form>
+          </div>
+        </Card>
+      </div>
+    </section>
+
+    <!-- Crop modal markup -->
+    <div
+      id="cropModal"
+      class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center"
+    >
+      <div class="bg-white p-6 rounded-lg max-w-md w-full">
+        <h3 class="text-xl mb-4 poppins">Crop Your Photo</h3>
+        <div id="cropContainer" class="mb-4"></div>
+        <div class="flex justify-end gap-2">
+          <button id="cancelCrop" class="px-4 py-2 bg-gray-200 rounded"
+            >Cancel</button
+          >
+          <button
+            id="applyCrop"
+            class="px-4 py-2 bg-[#FF5F1F] text-white rounded"
+          >
+            Apply
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+</Layout>
+
+<script>
+  import { authClient } from "src/lib/auth-client";
+  declare const Croppie: any;
+  let croppie: any = null;
+  let croppedImageBlob: Blob | null = null;
+  let currentStep = 1;
+  const totalSteps = 5;
+
+  function setupProfileHandlers() {
+    const form = document.querySelector("form");
+    const errorMessageElement = document.getElementById("form-error");
+    const fileInput = document.getElementById(
+      "profile_photo",
+    ) as HTMLInputElement;
+    const buttonText = document.getElementById("photoButtonText");
+    const cropModal = document.getElementById("cropModal");
+    const cropContainer = document.getElementById("cropContainer");
+    const cancelCropBtn = document.getElementById("cancelCrop");
+    const applyCropBtn = document.getElementById("applyCrop");
+    const submitButton = document.getElementById(
+      "submitButton",
+    ) as HTMLButtonElement;
+    const submitText = document.getElementById("submitText");
+    const loadingSpinner = document.getElementById("loadingSpinner");
+    const nextButton = document.getElementById("nextStep") as HTMLButtonElement;
+    const prevButton = document.getElementById("prevStep") as HTMLButtonElement;
+
+    if (
+      !form ||
+      !errorMessageElement ||
+      !fileInput ||
+      !buttonText ||
+      !cropModal ||
+      !cropContainer ||
+      !cancelCropBtn ||
+      !applyCropBtn ||
+      !submitButton ||
+      !submitText ||
+      !loadingSpinner ||
+      !nextButton ||
+      !prevButton
+    ) {
+      console.error("Required elements not found");
+      return;
+    }
+
+    function updateFormStep() {
+      // Hide all steps
+      document.querySelectorAll(".form-step").forEach((step) => {
+        step.classList.remove("active");
+      });
+
+      // Show current step
+      const currentStepElement = document.querySelector(
+        `[data-step="${currentStep}"]`,
+      );
+      if (currentStepElement) {
+        currentStepElement.classList.add("active");
+      }
+
+      // Update buttons
+      prevButton.classList.toggle("hidden", currentStep === 1);
+      nextButton.classList.toggle("hidden", currentStep === totalSteps);
+      submitButton.classList.toggle("hidden", currentStep !== totalSteps);
+
+      // Update stepper
+      const stepper = document.getElementById("form-stepper");
+      if (stepper) {
+        stepper.dataset.currentstep = String(currentStep - 1);
+      }
+
+      // If on review step, populate review content
+      if (currentStep === totalSteps) {
+        populateReviewStep();
+      }
+    }
+
+    function populateReviewStep() {
+      const reviewContent = document.getElementById("review-content");
+      const form = document.querySelector("form");
+      if (!reviewContent || !form) return;
+
+      const formData = new FormData(form);
+      let reviewHTML = "";
+
+      // Email
+      const email = formData.get("email");
+      if (email) {
+        reviewHTML += `
+          <div class="bg-white p-6 rounded-xl border-2 border-black">
+            <h3 class="text-lg font-semibold mb-2">Email</h3>
+            <p class="text-lg">${email}</p>
+          </div>
+        `;
+      }
+
+      // Name and Age
+      const firstName = formData.get("first_name");
+      const age = formData.get("age");
+      if (firstName || age) {
+        reviewHTML += `
+          <div class="bg-white p-6 rounded-xl border-2 border-black">
+            <h3 class="text-lg font-semibold mb-2">Personal Information</h3>
+            <p class="text-lg">${firstName || ""}, ${age || ""} years old</p>
+          </div>
+        `;
+      }
+
+      // Instagram
+      const instagram = formData.get("instagram_handle");
+      if (instagram) {
+        reviewHTML += `
+          <div class="bg-white p-6 rounded-xl border-2 border-black">
+            <h3 class="text-lg font-semibold mb-2">Instagram</h3>
+            <p class="text-lg">@${instagram}</p>
+          </div>
+        `;
+      }
+
+      // Profile Photo
+      reviewHTML += `
+        <div class="bg-white p-6 rounded-xl border-2 border-black">
+          <h3 class="text-lg font-semibold mb-4">Profile Photo</h3>
+          <div class="w-32 h-32 rounded-full overflow-hidden border-2 border-black mx-auto">
+            <img 
+              src="${document.getElementById("profile-preview")?.getAttribute("src") || ""}" 
+              alt="Profile Preview"
+              class="w-full h-full object-cover"
+            />
+          </div>
+        </div>
+      `;
+
+      // Interests
+      const interestsInput = document.getElementById(
+        "interests-input",
+      ) as HTMLInputElement;
+      const interests = interestsInput ? JSON.parse(interestsInput.value) : [];
+      if (interests.length) {
+        reviewHTML += `
+          <div class="bg-white p-6 rounded-xl border-2 border-black">
+            <h3 class="text-lg font-semibold mb-2">Interests</h3>
+            <div class="flex flex-wrap gap-2">
+              ${interests
+                .map(
+                  (interest: any) => `
+                <span class="px-4 py-2 bg-gray-100 rounded-full text-base border border-black">${interest}</span>
+              `,
+                )
+                .join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      reviewContent.innerHTML = reviewHTML;
+    }
+
+    function validateCurrentStep(): boolean {
+      const currentStepElement = document.querySelector(
+        `[data-step="${currentStep}"]`,
+      );
+      if (!currentStepElement) return false;
+
+      const inputs = Array.from(
+        currentStepElement.querySelectorAll("input[required]"),
+      ) as HTMLInputElement[];
+      let isValid = true;
+
+      inputs.forEach((input) => {
+        if (!input.value) {
+          isValid = false;
+          input.classList.add("border-red-500");
+        } else {
+          input.classList.remove("border-red-500");
+        }
+      });
+
+      // Password complexity validation for step 1
+      if (currentStep === 1) {
+        const passwordInput = document.querySelector(
+          "#password",
+        ) as HTMLInputElement;
+        const password = passwordInput.value;
+        const errorMessageElement = document.getElementById("form-error");
+
+        // Password requirements
+        const hasMinLength = password.length >= 8;
+
+        if (!hasMinLength) {
+          isValid = false;
+          passwordInput.classList.add("border-red-500");
+          if (errorMessageElement) {
+            errorMessageElement.classList.remove("hidden");
+            errorMessageElement.querySelector("span")!.textContent =
+              "Password must be at least 8 characters";
+          }
+        } else {
+          passwordInput.classList.remove("border-red-500");
+          if (errorMessageElement) {
+            errorMessageElement.classList.add("hidden");
+          }
+        }
+      }
+
+      // Special validation for age
+      if (currentStep === 3) {
+        const ageInput = document.querySelector(
+          'input[name="age"]',
+        ) as HTMLInputElement;
+        const age = parseInt(ageInput.value);
+        const ageError = document.getElementById("age-error");
+
+        if (isNaN(age) || age < 18 || age > 120) {
+          isValid = false;
+          if (ageError) ageError.classList.remove("hidden");
+        } else if (ageError) {
+          ageError.classList.add("hidden");
+        }
+      }
+
+      // Special validation for photo
+      if (currentStep === 2 && !croppedImageBlob) {
+        const photoError = document.getElementById("photo-error");
+        if (photoError) {
+          photoError.classList.remove("hidden");
+          photoError.querySelector("span")!.textContent =
+            "Please add a profile photo";
+          isValid = false;
+        }
+      }
+
+      return isValid;
+    }
+
+    nextButton.addEventListener("click", () => {
+      if (validateCurrentStep() && currentStep < totalSteps) {
+        currentStep++;
+        updateFormStep();
+      }
+    });
+
+    prevButton.addEventListener("click", () => {
+      if (currentStep > 1) {
+        currentStep--;
+        updateFormStep();
+      }
+    });
+
+    function initCroppie() {
+      if (!croppie && cropContainer) {
+        croppie = new Croppie(cropContainer, {
+          viewport: { width: 300, height: 300, type: "square" },
+          boundary: { width: 300, height: 300 },
+          enableOrientation: true,
+        });
+      }
+    }
+
+    function showModal() {
+      if (!cropModal) return;
+      cropModal.classList.add("active");
+    }
+
+    function hideModal() {
+      if (!cropModal) return;
+      cropModal.classList.remove("active");
+      if (croppie) {
+        croppie.destroy();
+        croppie = null;
+      }
+    }
+
+    function resetPhotoState() {
+      hideModal();
+      fileInput.value = "";
+      if (buttonText) buttonText.textContent = "Add Photo";
+      croppedImageBlob = null;
+
+      const previewImg = document.getElementById(
+        "profile-preview",
+      ) as HTMLImageElement;
+      if (previewImg) {
+        previewImg.src = "";
+        previewImg.classList.add("opacity-0");
+
+        const placeholderIcon = previewImg.parentElement?.querySelector("div");
+        if (placeholderIcon) {
+          placeholderIcon.classList.remove("hidden");
+        }
+      }
+    }
+
+    // File input change handler
+    fileInput.addEventListener("change", (e) => {
+      const file = fileInput.files?.[0];
+      if (!file) return;
+
+      const allowedTypes = ["image/jpeg", "image/png"];
+      const maxSize = 20 * 1024 * 1024; // 20MB
+
+      const photoError = document.getElementById("photo-error");
+
+      if (!allowedTypes.includes(file.type)) {
+        if (photoError) {
+          photoError.querySelector("span")!.textContent =
+            "Only JPG and PNG files are allowed.";
+          photoError.classList.remove("hidden");
+        }
+        fileInput.value = "";
+        return;
+      }
+
+      if (file.size > maxSize) {
+        if (photoError) {
+          photoError.querySelector("span")!.textContent =
+            "Image file size must be less than 20MB";
+          photoError.classList.remove("hidden");
+        }
+        fileInput.value = "";
+        return;
+      }
+
+      // Hide error message if file is valid
+      if (photoError) {
+        photoError.classList.add("hidden");
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        initCroppie();
+        showModal();
+        if (croppie && e.target?.result) {
+          croppie.bind({
+            url: e.target.result,
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Apply crop handler
+    applyCropBtn.addEventListener("click", () => {
+      if (!croppie) return;
+
+      croppie
+        .result({
+          type: "blob",
+          size: "viewport",
+          format: "jpeg",
+          quality: 1,
+        })
+        .then((blob: Blob) => {
+          croppedImageBlob = blob;
+          hideModal();
+          buttonText.textContent = "Photo Added";
+
+          const previewImg = document.getElementById(
+            "profile-preview",
+          ) as HTMLImageElement;
+          if (previewImg) {
+            previewImg.src = URL.createObjectURL(blob);
+            previewImg.classList.remove("opacity-0");
+
+            const placeholderIcon =
+              previewImg.parentElement?.querySelector("div");
+            if (placeholderIcon) {
+              placeholderIcon.classList.add("hidden");
+            }
+          }
+        });
+    });
+
+    // Cancel handlers
+    cancelCropBtn.addEventListener("click", resetPhotoState);
+
+    cropModal.addEventListener("click", (e) => {
+      if (e.target === cropModal) {
+        resetPhotoState();
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && cropModal.classList.contains("active")) {
+        resetPhotoState();
+      }
+    });
+
+    // Add password toggle functionality
+    const togglePassword = document.getElementById("toggle-password")!;
+    const passwordInput = document.getElementById(
+      "password",
+    ) as HTMLInputElement;
+    passwordInput.type = "password"; // Ensure password is initially hidden
+
+    togglePassword.addEventListener("click", () => {
+      const type = passwordInput.type === "password" ? "text" : "password";
+      passwordInput.type = type;
+      togglePassword.textContent = type === "password" ? "Show" : "Hide";
+    });
+
+    // Form submission handler
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      // Reset all error states first
+      const photoError = document.getElementById("photo-error");
+      if (photoError) photoError.classList.add("hidden");
+      if (errorMessageElement) errorMessageElement.classList.add("hidden");
+
+      // Check if terms are accepted
+      const agreement = form.querySelector("#agreement") as HTMLInputElement;
+      if (!agreement.checked && errorMessageElement) {
+        errorMessageElement.classList.remove("hidden");
+        errorMessageElement.querySelector("span")!.textContent =
+          "You must agree to the Privacy Policy and Terms of Use";
+        return;
+      }
+
+      // Show loading state
+      submitButton.disabled = true;
+      submitText.textContent = "Creating Account...";
+      loadingSpinner.classList.remove("hidden");
+
+      try {
+        // First, register the user
+        const { data: authData, error: authError } =
+          await authClient.signUp.email({
+            email: (form.querySelector("#email") as HTMLInputElement).value,
+            password: (form.querySelector("#password") as HTMLInputElement)
+              .value,
+            name: "",
+          });
+
+        if (authError) {
+          // Check for specific error types
+          if (
+            // this is extremely unhelpful in the case of an email already being registered
+            authError.message?.toLowerCase().includes("user already exists")
+          ) {
+            throw new Error(
+              "This email is already registered. Please sign in instead or use a different email address.",
+            );
+          }
+          throw new Error(authError.message ?? "Registration failed");
+        }
+
+        // Then submit the profile data
+        const formData = new FormData(form);
+        if (croppedImageBlob) {
+          formData.set("profile_photo", croppedImageBlob);
+        }
+
+        const profileResponse = await fetch("/api/createProfile", {
+          method: "POST",
+          body: formData,
+        });
+
+        const profileData = await profileResponse.json();
+
+        if (!profileResponse.ok) {
+          throw new Error(profileData.error || "Failed to create profile");
+        }
+
+        // Get event ID from URL params for redirect
+        const params = new URLSearchParams(window.location.search);
+        const eventId = params.get("event");
+
+        // Redirect to specific event if eventId exists, otherwise to events page
+        window.location.href = eventId
+          ? `/events/${eventId}?RegistrationSuccess=true`
+          : "/events";
+      } catch (error: any) {
+        // Show error message
+        if (errorMessageElement) {
+          errorMessageElement.classList.remove("hidden");
+          errorMessageElement.querySelector("span")!.textContent =
+            error.message;
+        }
+
+        // Reset button state
+        submitButton.disabled = false;
+        submitText.textContent = "Create Account";
+        loadingSpinner.classList.add("hidden");
+
+        // Scroll error into view
+        errorMessageElement?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }
+    });
+
+    // ... rest of the existing code (nextButton, prevButton handlers, etc.)
+  }
+
+  // Initialize handlers
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", setupProfileHandlers);
+  } else {
+    setupProfileHandlers();
+  }
+
+  document.addEventListener("astro:page-load", setupProfileHandlers);
+</script>

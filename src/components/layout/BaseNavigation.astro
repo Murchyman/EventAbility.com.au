@@ -1,0 +1,148 @@
+---
+import LoginButton from "@components/generic/LoginButton";
+import HamburgerMenu from "@components/generic/HamburgerMenu";
+import ChatButton from "@components/generic/ChatButton";
+import { colors } from "src/data/colors.json";
+
+interface Props {
+  pageTitle?: string;
+}
+
+const { pageTitle } = Astro.props;
+
+// Function to calculate color difference (using a simple RGB distance)
+function getColorDifference(color1: string, color2: string) {
+  const hex1 = color1.substring(1);
+  const hex2 = color2.substring(1);
+  const r1 = parseInt(hex1.substring(0, 2), 16);
+  const g1 = parseInt(hex1.substring(2, 4), 16);
+  const b1 = parseInt(hex1.substring(4, 6), 16);
+  const r2 = parseInt(hex2.substring(0, 2), 16);
+  const g2 = parseInt(hex2.substring(2, 4), 16);
+  const b2 = parseInt(hex2.substring(4, 6), 16);
+  return Math.sqrt(
+    Math.pow(r1 - r2, 2) + Math.pow(g1 - g2, 2) + Math.pow(b1 - b2, 2),
+  );
+}
+
+// Fisher-Yates shuffle algorithm
+function shuffleArray<T>(array: T[]): T[] {
+  const newArray = [...array];
+  for (let i = newArray.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+  }
+  return newArray;
+}
+
+// Distribute colors to maximize difference between adjacent colors
+function distributeColors(colors: string[]) {
+  // Start with a random color
+  const shuffledColors = shuffleArray(colors);
+  const result: string[] = [shuffledColors[0]];
+  const remaining = shuffledColors.slice(1);
+
+  while (remaining.length > 0) {
+    const lastColor = result[result.length - 1];
+    let maxDiff = -1;
+    let bestColorIndex = 0;
+
+    // Add some randomization when differences are similar
+    remaining.forEach((color, index) => {
+      const diff = getColorDifference(lastColor, color);
+      // Add small random factor to break ties and add variety
+      const randomFactor = Math.random() * 20;
+      if (diff + randomFactor > maxDiff) {
+        maxDiff = diff + randomFactor;
+        bestColorIndex = index;
+      }
+    });
+
+    result.push(remaining[bestColorIndex]);
+    remaining.splice(bestColorIndex, 1);
+  }
+
+  return result;
+}
+
+// Distribute colors and cycle through them for the text
+const distributedColors = distributeColors(colors);
+const textLength = "Event Ability".length;
+const textColors = Array.from(
+  { length: textLength },
+  (_, i) => distributedColors[i % distributedColors.length],
+);
+---
+
+<header
+  class="border-b-4 border-black flex justify-between p-2 md:p-6 items-center"
+>
+  {pageTitle && <h1 class="hidden">{pageTitle}</h1>}
+  <a href="/" title="Back to Home">
+    <div class="righteous text-3xl md:text-5xl flex mr-4 md:mr-8">
+      {
+        "Event Ability".split("").map((letter, index) => (
+          <span
+            class="logo-text"
+            style={{
+              color: textColors[index],
+            }}
+          >
+            {letter}
+          </span>
+        ))
+      }
+    </div>
+  </a>
+  <!-- Desktop Navigation -->
+  <nav class="hidden md:inline-block">
+    <h2 class="hidden">Navigation</h2>
+    <ul class="flex gap-4 poppins">
+      <LoginButton client:load>
+        <div
+          slot="fallback"
+          class="inline-flex justify-center items-center p-3 bg-black text-white rounded hover:opacity-90 font-bold w-[100px] text-center opacity-70"
+        >
+          Login
+        </div>
+      </LoginButton>
+
+      <a
+        class="bg-black text-white px-6 py-3 rounded hover:opacity-90 font-bold"
+        href="/events/"
+      >
+        Events
+      </a>
+    </ul>
+  </nav>
+  <!-- Mobile Navigation -->
+  <nav class="md:hidden flex items-center gap-2">
+    <h2 class="hidden">Mobile Navigation</h2>
+    <div class="flex items-center gap-2">
+      <ChatButton client:load />
+      <HamburgerMenu client:load />
+    </div>
+  </nav>
+</header>
+
+<style>
+  .logo-text {
+    text-shadow:
+      -1px -1px 0 #000,
+      1px -1px 0 #000,
+      -1px 1px 0 #000,
+      1px 1px 0 #000,
+      3px 3px 0 #000;
+  }
+
+  @media (min-width: 768px) {
+    .logo-text {
+      text-shadow:
+        -1px -1px 0 #000,
+        1px -1px 0 #000,
+        -1px 1px 0 #000,
+        1px 1px 0 #000,
+        4px 4px 0 #000;
+    }
+  }
+</style>

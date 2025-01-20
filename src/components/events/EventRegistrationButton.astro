@@ -1,0 +1,523 @@
+---
+import RainbowButton from "@components/generic/RainbowButton.astro";
+import { turso } from "src/lib/turso";
+import { calculateBookingFee, calculateTotalAmount } from "src/lib/stripe";
+
+interface Props {
+    eventId: number;
+    cost: number;
+    maxParticipants: number | null;
+}
+
+const { eventId, cost, maxParticipants } = Astro.props;
+const user = Astro.locals.user;
+
+// Calculate fees if there's a cost
+const bookingFee = cost > 0 ? calculateBookingFee(cost) : 0;
+const totalAmount = cost > 0 ? calculateTotalAmount(cost) : 0;
+
+// If user is authenticated, check if they've already booked
+let hasBooked = false;
+if (user) {
+    const result = await turso.execute({
+        sql: "SELECT 1 FROM event_participants WHERE event_id = ? AND user_id = ?",
+        args: [eventId, user.id],
+    });
+    hasBooked = result.rows.length > 0;
+}
+
+// Check current participant count if there's a maximum
+let isEventFull = false;
+if (maxParticipants !== null) {
+    const participantCount = await turso.execute({
+        sql: "SELECT COUNT(*) as count FROM event_participants WHERE event_id = ?",
+        args: [eventId],
+    });
+    const count = Number(participantCount.rows[0]?.count ?? 0);
+    isEventFull = count >= maxParticipants;
+}
+
+// Determine the initial button state
+const isAuthenticated = !!user;
+const buttonText = hasBooked
+    ? "You're registered!"
+    : isEventFull
+      ? "Event Full"
+      : isAuthenticated
+        ? cost > 0
+            ? "Purchase Ticket"
+            : "Register for Event"
+        : "Sign in to Register";
+const formAction = isAuthenticated
+    ? "/api/eventRegister"
+    : `/signin?event=${eventId}`;
+const formMethod = isAuthenticated ? "post" : "get";
+---
+
+{
+    hasBooked ? (
+        <div class="w-full bg-gray-200 text-gray-700 px-6 py-4 rounded-lg font-bold text-center text-lg">
+            You have successfully registered for this event! See you there!
+            <div class="flex justify-center">
+                <a
+                    href={`/ticket/${eventId}`}
+                    class="mt-4 bg-black text-white px-6 py-2 rounded-lg font-bold hover:bg-gray-800 transition-colors inline-block"
+                >
+                    View Ticket
+                </a>
+            </div>
+        </div>
+    ) : isEventFull ? (
+        <div class="w-full bg-red-100 text-red-700 px-6 py-4 rounded-lg font-bold text-center text-lg">
+            Sorry, this event has reached maximum capacity!
+        </div>
+    ) : (
+        <div id="registration-container">
+            <form
+                action={formAction}
+                method={formMethod}
+                id="registerForm"
+                onsubmit={isEventFull ? "return false;" : undefined}
+                data-cost={cost}
+                data-event-id={eventId}
+            >
+                <input type="hidden" name="eventId" value={eventId} />
+                <input
+                    type="hidden"
+                    name="paymentIntentId"
+                    id="paymentIntentId"
+                />
+                <RainbowButton class="w-full">
+                    <div class="flex items-center justify-center gap-2">
+                        <span class="register-text">{buttonText}</span>
+                        {cost > 0 && isAuthenticated && (
+                            <span class="register-cost">
+                                (${(totalAmount / 100).toFixed(2)})
+                            </span>
+                        )}
+                        <div class="register-spinner hidden">
+                            <svg
+                                class="animate-spin h-5 w-5"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                            >
+                                <circle
+                                    class="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    stroke-width="4"
+                                />
+                                <path
+                                    class="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                />
+                            </svg>
+                        </div>
+                    </div>
+                </RainbowButton>
+            </form>
+
+            <div
+                id="payment-container"
+                class="hidden"
+                data-amount={totalAmount}
+            >
+                <div class="mb-4 space-y-2">
+                    <p class="text-lg">
+                        <span class="font-medium">Ticket Price:</span> $
+                        {(cost / 100).toFixed(2)} AUD
+                    </p>
+                    <p class="text-lg">
+                        <span class="font-medium">Booking Fee:</span> $
+                        {(bookingFee / 100).toFixed(2)} AUD
+                    </p>
+                    <p class="text-lg font-bold border-t pt-2">
+                        Total: ${(totalAmount / 100).toFixed(2)} AUD
+                    </p>
+                </div>
+
+                <div id="payment-loading" class="py-8 text-center">
+                    <svg
+                        class="animate-spin h-8 w-8 mx-auto text-gray-500"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                    >
+                        <circle
+                            class="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            stroke-width="4"
+                        />
+                        <path
+                            class="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        />
+                    </svg>
+                    <p class="mt-2 text-gray-600">Loading payment form...</p>
+                </div>
+
+                <form id="payment-form" class="space-y-4 hidden">
+                    <div id="payment-element" />
+                    <div
+                        id="error-message"
+                        class="hidden bg-red-50 border-2 border-red-500 rounded-lg p-3 text-red-700"
+                    />
+                    <div class="flex gap-2">
+                        <button
+                            type="button"
+                            id="cancel-payment"
+                            class="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-bold hover:bg-gray-200"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            class="flex-1 bg-gradient-to-r from-[#FF5F1F] to-[#FF8F1F] text-white py-3 px-4 rounded-lg font-bold disabled:opacity-50"
+                        >
+                            <span id="button-text">Pay Now</span>
+                            <div id="spinner" class="hidden">
+                                <svg
+                                    class="animate-spin h-5 w-5 mx-auto"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <circle
+                                        class="opacity-25"
+                                        cx="12"
+                                        cy="12"
+                                        r="10"
+                                        stroke="currentColor"
+                                        stroke-width="4"
+                                    />
+                                    <path
+                                        class="opacity-75"
+                                        fill="currentColor"
+                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                    />
+                                </svg>
+                            </div>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="success-message" class="hidden space-y-4">
+                <div class="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-100 rounded-lg p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-8 h-8 flex-shrink-0 text-green-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-green-800">Registration Successful!</h2>
+                            <p class="poppins text-green-700">You're all set for this event.</p>
+                        </div>
+                    </div>
+                    <div class="space-y-3 text-green-800">
+                        <p class="poppins text-lg font-medium mb-4">What happens next?</p>
+                        <div class="space-y-4">
+                            <div class="poppins space-y-2">
+                                <li>We'll send you a confirmation email with event details</li>
+                                <li>After the event, you'll be able to view profiles of other attendees</li>
+                                </br>
+                                <p class="poppins text-center mb-4">
+                                    <strong>Important:</strong> To keep events comfortable for everyone, please don't ask for numbers or social media during the event.</p>
+                            </div>
+                        </div>
+                        <div class="flex justify-center">
+                            <a
+                                href={`/ticket/${eventId}`}
+                                class="mt-4 bg-black text-white px-6 py-2 rounded-lg font-bold hover:bg-gray-800 transition-colors inline-block"
+                            >
+                                View Ticket
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+<script>
+    interface StripeConstructor {
+        (key: string, options?: any): any;
+    }
+
+    declare global {
+        interface Window {
+            //@ts-ignore
+            Stripe?: StripeConstructor;
+        }
+    }
+
+    let stripe: any = null;
+    let elements: any = null;
+    let isInitialized = false;
+
+    // Get URL parameters once at the start
+    const urlParams = new URLSearchParams(window.location.search);
+
+    async function loadStripeJs() {
+        if (
+            window.Stripe &&
+            document.querySelector('script[src*="stripe.com"]')
+        ) {
+            return window.Stripe(import.meta.env.PUBLIC_STRIPE_PUBLISHABLE_KEY);
+        }
+
+        const script = document.createElement("script");
+        script.src = "https://js.stripe.com/v3/";
+        script.async = true;
+        document.head.appendChild(script);
+
+        return new Promise((resolve) => {
+            script.onload = () => {
+                if (window.Stripe) {
+                    resolve(
+                        window.Stripe(
+                            import.meta.env.PUBLIC_STRIPE_PUBLISHABLE_KEY,
+                        ),
+                    );
+                }
+            };
+        });
+    }
+
+    async function initialize() {
+        if (isInitialized) return;
+
+        const paymentContainer = document.querySelector("#payment-container");
+        const form = document.querySelector("#payment-form");
+        const loadingEl = document.querySelector("#payment-loading");
+
+        if (!paymentContainer || !form || !loadingEl) return;
+
+        try {
+            if (!stripe) {
+                stripe = await loadStripeJs();
+            }
+
+            const response = await fetch("/api/create-payment-intent", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    eventId: Number(
+                        document
+                            .querySelector("#registerForm")
+                            ?.getAttribute("data-event-id"),
+                    ),
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    data.error || "Failed to create payment intent",
+                );
+            }
+
+            const { clientSecret } = data;
+
+            elements = stripe.elements({ clientSecret });
+            const paymentElement = elements.create("payment");
+            paymentElement.mount("#payment-element");
+
+            loadingEl.classList.add("hidden");
+            form.classList.remove("hidden");
+            isInitialized = true;
+        } catch (error) {
+            console.error("Payment form error:", error);
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : "Failed to load payment form";
+            showError(errorMessage);
+            if (loadingEl instanceof HTMLElement) {
+                loadingEl.textContent =
+                    "Failed to load payment form. Please try again.";
+            }
+        }
+    }
+
+    function showError(message: string) {
+        const messageContainer = document.querySelector("#error-message");
+        if (messageContainer instanceof HTMLElement) {
+            messageContainer.textContent = message;
+            messageContainer.classList.remove("hidden");
+        }
+    }
+
+    async function handleSubmit(e: Event) {
+        e.preventDefault();
+
+        const form = e.target as HTMLFormElement;
+        const submitButton = form.querySelector(
+            "button[type=submit]",
+        ) as HTMLButtonElement;
+        const spinner = form.querySelector("#spinner");
+        const buttonText = form.querySelector("#button-text");
+
+        if (!submitButton || !spinner || !buttonText || !stripe || !elements)
+            return;
+
+        submitButton.disabled = true;
+        spinner.classList.remove("hidden");
+        buttonText.classList.add("hidden");
+
+        try {
+            const { error: submitError } = await elements.submit();
+            if (submitError) {
+                showError(submitError.message);
+                return;
+            }
+
+            const { error, paymentIntent } = await stripe.confirmPayment({
+                elements,
+                redirect: "if_required",
+            });
+
+            if (error) {
+                showError(error.message);
+            } else if (
+                paymentIntent?.status === "succeeded" &&
+                paymentIntent.id
+            ) {
+                const paymentIntentInput =
+                    document.querySelector("#paymentIntentId");
+                if (paymentIntentInput instanceof HTMLInputElement) {
+                    paymentIntentInput.value = paymentIntent.id;
+                }
+                await submitRegistration();
+            }
+        } catch (error) {
+            if (error instanceof Error) {
+                showError(error.message);
+            } else {
+                showError("An unknown error occurred");
+            }
+        } finally {
+            submitButton.disabled = false;
+            spinner.classList.add("hidden");
+            buttonText.classList.remove("hidden");
+        }
+    }
+
+    async function submitRegistration() {
+        const registerForm = document.querySelector("#registerForm");
+        const container = document.querySelector("#registration-container");
+        if (!(registerForm instanceof HTMLFormElement) || !container) return;
+
+        // Show loading state
+        const button = registerForm.querySelector("button");
+        const spinner = registerForm.querySelector(".register-spinner");
+        const text = registerForm.querySelector(".register-text");
+        const cost = registerForm.querySelector(".register-cost");
+
+        if (button && spinner && text) {
+            button.disabled = true;
+            spinner.classList.remove("hidden");
+            text.textContent = "Processing...";
+            if (cost) cost.classList.add("hidden");
+        }
+
+        const formData = new FormData(registerForm);
+        try {
+            const response = await fetch(registerForm.action, {
+                method: "POST",
+                body: formData,
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                const registrationForm = document.querySelector('#registerForm');
+                const successMessage = document.querySelector('#success-message');
+                const paymentContainer = document.querySelector('#payment-container');
+                if (registrationForm && successMessage && paymentContainer) {
+                    registrationForm.classList.add('hidden');
+                    paymentContainer.classList.add('hidden');
+                    successMessage.classList.remove('hidden');
+                }
+            } else {
+                showError(data.error || "Failed to register for event");
+                // Reset button state on error
+                if (button && spinner && text) {
+                    button.disabled = false;
+                    spinner.classList.add("hidden");
+                    text.textContent = "Register for Event";
+                    if (cost) cost.classList.remove("hidden");
+                }
+            }
+        } catch (error) {
+            showError("Failed to register for event");
+            // Reset button state on error
+            if (button && spinner && text) {
+                button.disabled = false;
+                spinner.classList.add("hidden");
+                text.textContent = "Register for Event";
+                if (cost) cost.classList.remove("hidden");
+            }
+        }
+    }
+
+    function setupHandlers() {
+        const form = document.querySelector("#registerForm");
+        const paymentContainer = document.querySelector("#payment-container");
+        const paymentForm = document.querySelector("#payment-form");
+        const cancelButton = document.querySelector("#cancel-payment");
+
+        if (!form || !paymentContainer || !paymentForm || !cancelButton) return;
+
+        // Start preloading Stripe Elements immediately
+        if (Number(form.getAttribute("data-cost") || "0") > 0) {
+            initialize();
+        }
+
+        form.addEventListener("submit", async (e: Event) => {
+            e.preventDefault();
+            const isAuthenticated = form.getAttribute("method") === "post";
+
+            if (!isAuthenticated) {
+                // If not authenticated, redirect to sign in
+                window.location.href = form.getAttribute("action") || "/signin";
+                return;
+            }
+
+            const cost = Number(form.getAttribute("data-cost") || "0");
+            if (cost > 0) {
+                form.classList.add("hidden");
+                paymentContainer.classList.remove("hidden");
+            } else {
+                await submitRegistration();
+            }
+        });
+
+        cancelButton.addEventListener("click", () => {
+            paymentContainer.classList.add("hidden");
+            form.classList.remove("hidden");
+        });
+
+        paymentForm.addEventListener("submit", handleSubmit);
+
+        // Check for successful registration and redirect to ticket page
+        if (urlParams.get("booking") === "success") {
+            const eventId = form.getAttribute("data-event-id");
+            window.location.href = `/ticket/${eventId}`;
+        }
+    }
+
+    setupHandlers();
+    document.addEventListener("astro:page-load", setupHandlers);
+</script>

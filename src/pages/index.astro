@@ -1,0 +1,252 @@
+---
+import Layout from "@layouts/Default.astro";
+import DesktopLayout from "@components/layouts/DesktopLayout.astro";
+import MobileLayout from "@components/layouts/MobileLayout.astro";
+import Card from "@components/generic/Card.astro";
+
+export const prerender = true;
+---
+
+<Layout
+  title="Social Spot | Home"
+  pageTitle="Social Spot | Home"
+  description="Social Spot is a modern dating platform that brings singles together through fun, in-person events and shared experiences.Skip pointless texting and disappointing first dates. At our events, you'll meet other singles in person, connect naturally, and reconnect online after the event."
+>
+  <div class="bg-[#B8E8FF]">
+    <main class="p-6 max-w-[1400px] mx-auto">
+      {/* Desktop and Mobile Layouts */}
+      <DesktopLayout />
+      <MobileLayout />
+
+      {/* FAQ Section */}
+      <section class="mt-8">
+        <Card>
+          <h2 class="text-2xl md:text-4xl lg:text-6xl mb-8 poppins font-medium">
+            Frequently Asked Questions
+          </h2>
+          <div class="space-y-4">
+            <details class="group">
+              <summary
+                class="flex items-center cursor-pointer list-none p-4 bg-gray-50 hover:bg-gray-100 rounded-lg"
+              >
+                <h3 class="text-xl poppins flex-grow text-left">
+                  How much does it cost?
+                </h3>
+                <span
+                  class="transition group-open:rotate-180 flex-shrink-0 ml-4"
+                >
+                  <svg
+                    fill="none"
+                    height="24"
+                    shape-rendering="geometricPrecision"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.5"
+                    viewBox="0 0 24 24"
+                    width="24"
+                  >
+                    <path d="M6 9l6 6 6-6"></path>
+                  </svg>
+                </span>
+              </summary>
+              <p class="poppins mt-4 px-4">
+                No subscriptions - just pay per event! Prices typically range
+                from $20-40, with some free events too. Your ticket includes the
+                activity and often extras like drinks or snacks, depending on
+                the venue.
+              </p>
+            </details>
+
+            <details class="group">
+              <summary
+                class="flex items-center cursor-pointer list-none p-4 bg-gray-50 hover:bg-gray-100 rounded-lg"
+              >
+                <h3 class="text-xl poppins flex-grow text-left">
+                  What's the age range?
+                </h3>
+                <span
+                  class="transition group-open:rotate-180 flex-shrink-0 ml-4"
+                >
+                  <svg
+                    fill="none"
+                    height="24"
+                    shape-rendering="geometricPrecision"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.5"
+                    viewBox="0 0 24 24"
+                    width="24"
+                  >
+                    <path d="M6 9l6 6 6-6"></path>
+                  </svg>
+                </span>
+              </summary>
+              <p class="poppins mt-4 px-4">
+                All our events are for adults aged 18 and over. While some
+                events welcome all ages above 18, we also offer age-specific
+                events (like 20s & 30s, 30s & 40s) to help you connect with
+                people at a similar life stage.
+              </p>
+            </details>
+
+            <details class="group">
+              <summary
+                class="flex items-center cursor-pointer list-none p-4 bg-gray-50 hover:bg-gray-100 rounded-lg"
+              >
+                <h3 class="text-xl poppins flex-grow text-left">
+                  Do I need to come in a group?
+                </h3>
+                <span
+                  class="transition group-open:rotate-180 flex-shrink-0 ml-4"
+                >
+                  <svg
+                    fill="none"
+                    height="24"
+                    shape-rendering="geometricPrecision"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.5"
+                    viewBox="0 0 24 24"
+                    width="24"
+                  >
+                    <path d="M6 9l6 6 6-6"></path>
+                  </svg>
+                </span>
+              </summary>
+              <p class="poppins mt-4 px-4">
+                Not at all! Most of our attendees come solo - it's the best way
+                to meet new people. Our hosts and activity-based format make it
+                natural and comfortable to connect with other singles. You'll
+                find plenty of other solo attendees looking for meaningful
+                connections.
+              </p>
+            </details>
+
+            <details class="group">
+              <summary
+                class="flex items-center cursor-pointer list-none p-4 bg-gray-50 hover:bg-gray-100 rounded-lg"
+              >
+                <h3 class="text-xl poppins flex-grow text-left">
+                  What types of events do you offer?
+                </h3>
+                <span
+                  class="transition group-open:rotate-180 flex-shrink-0 ml-4"
+                >
+                  <svg
+                    fill="none"
+                    height="24"
+                    shape-rendering="geometricPrecision"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.5"
+                    viewBox="0 0 24 24"
+                    width="24"
+                  >
+                    <path d="M6 9l6 6 6-6"></path>
+                  </svg>
+                </span>
+              </summary>
+              <p class="poppins mt-4 px-4">
+                We organize a diverse range of singles events including social
+                sports, cooking classes, wine tastings, art workshops, and
+                casual meetups at local venues. Each event is designed to help
+                you meet potential matches in a fun, pressure-free environment.
+              </p>
+            </details>
+
+            <details class="group">
+              <summary
+                class="flex items-center cursor-pointer list-none p-4 bg-gray-50 hover:bg-gray-100 rounded-lg"
+              >
+                <h3 class="text-xl poppins flex-grow text-left">
+                  Is there a dress code?
+                </h3>
+                <span
+                  class="transition group-open:rotate-180 flex-shrink-0 ml-4"
+                >
+                  <svg
+                    fill="none"
+                    height="24"
+                    shape-rendering="geometricPrecision"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.5"
+                    viewBox="0 0 24 24"
+                    width="24"
+                  >
+                    <path d="M6 9l6 6 6-6"></path>
+                  </svg>
+                </span>
+              </summary>
+              <p class="poppins mt-4 px-4">
+                Dress codes vary by event and venue. We'll always specify any
+                dress requirements in the event details, but generally, we
+                encourage comfortable, casual attire that's appropriate for the
+                activity.
+              </p>
+            </details>
+
+            <details class="group">
+              <summary
+                class="flex items-center cursor-pointer list-none p-4 bg-gray-50 hover:bg-gray-100 rounded-lg"
+              >
+                <h3 class="text-xl poppins flex-grow text-left">
+                  How can I contact you?
+                </h3>
+                <span
+                  class="transition group-open:rotate-180 flex-shrink-0 ml-4"
+                >
+                  <svg
+                    fill="none"
+                    height="24"
+                    shape-rendering="geometricPrecision"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.5"
+                    viewBox="0 0 24 24"
+                    width="24"
+                  >
+                    <path d="M6 9l6 6 6-6"></path>
+                  </svg>
+                </span>
+              </summary>
+              <p class="poppins mt-4 px-4">
+                You can reach us through our <a
+                  href="/contact"
+                  class="text-[#FF5F1F] hover:underline">contact form</a
+                >, or email us directly at <a
+                  href="mailto:support@socialspot.com.au"
+                  class="text-[#FF5F1F] hover:underline"
+                  >support@socialspot.com.au</a
+                >. For venue-related inquiries, please contact <a
+                  href="mailto:venues@socialspot.com.au"
+                  class="text-[#FF5F1F] hover:underline"
+                  >venues@socialspot.com.au</a
+                >.
+              </p>
+            </details>
+
+            <div class="mt-12 text-center">
+              <p class="text-xl mb-4 poppins">
+                Still have questions? We're here to help!
+              </p>
+              <a href="/contact">
+                <button
+                  class="w-full bg-black text-white px-6 py-3.5 rounded-b-lg hover:bg-black/90 font-medium transition-colors"
+                >
+                  Get in Touch
+                </button>
+              </a>
+            </div>
+          </div>
+        </Card>
+      </section>
+    </main>
+  </div>
+</Layout>

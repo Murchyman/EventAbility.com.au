@@ -1,0 +1,496 @@
+---
+import Layout from "@layouts/Default.astro";
+import Card from "@components/generic/Card.astro";
+import { GoogleSignInButton } from "@components/GoogleSignInButton";
+
+export const prerender = false;
+---
+
+<style>
+  input[type="password"]::-ms-reveal,
+  input[type="password"]::-ms-clear,
+  input[type="password"]::-webkit-contacts-auto-fill-button,
+  input[type="password"]::-webkit-credentials-auto-fill-button {
+    display: none !important;
+  }
+
+  /* Increase the clickable area of the toggle password button */
+  #toggle-password {
+    padding: 0.5rem;
+    font-size: 1rem;
+  }
+
+  @media (max-width: 640px) {
+    #toggle-password {
+      padding: 0.75rem;
+      font-size: 1.25rem;
+    }
+  }
+
+  .modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+  }
+
+  .modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 1rem;
+    border: 2px solid black;
+    width: 90%;
+    max-width: 500px;
+  }
+</style>
+
+<Layout title="Sign in" description="Sign in to your account">
+  <div class="min-h-screen bg-[#00B4FF] p-6 flex items-center justify-center">
+    <Card>
+      <div class="space-y-6">
+        <div class="space-y-2">
+          <h1 class="text-4xl font-bold tracking-tight">Sign in</h1>
+          <p class="text-lg">
+            New here?
+            <a
+              href="/createprofile"
+              class="underline hover:text-black/70 font-medium"
+              data-astro-reload
+              onclick="this.href = '/createprofile' + window.location.search"
+              >Create an account</a
+            >
+          </p>
+        </div>
+        <form class="space-y-4" novalidate>
+          <div class="space-y-2">
+            <label for="email" class="text-lg font-medium">Email</label>
+            <input
+              type="email"
+              name="email"
+              id="email"
+              required
+              class="w-full h-12 bg-white/90 border-2 border-black rounded-xl text-lg px-3"
+            />
+          </div>
+          <div class="space-y-2">
+            <div class="flex justify-between items-center">
+              <label for="password" class="text-lg font-medium">Password</label>
+              <a
+                href="javascript:void(0)"
+                id="forgot-password-link"
+                class="text-sm hover:underline text-gray-600"
+              >
+                Forgot password?
+              </a>
+            </div>
+            <div class="relative">
+              <input
+                type="password"
+                name="password"
+                id="password"
+                required
+                class="w-full h-12 bg-white/90 border-2 border-black rounded-xl text-lg px-3"
+              />
+              <button
+                type="button"
+                id="toggle-password"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-600 hover:text-gray-900 focus:outline-none"
+                aria-label="Toggle password visibility"
+              >
+                Show
+              </button>
+            </div>
+          </div>
+          <button
+            type="submit"
+            class="w-full h-12 text-lg font-medium bg-[#FF5F1F] hover:bg-[#FF5F1F]/90 text-white rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center"
+          >
+            <span id="submit-button-text">Sign in</span>
+            <svg
+              id="submit-button-spinner"
+              class="hidden animate-spin ml-2 h-5 w-5"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"></circle>
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+          </button>
+        </form>
+        <div class="relative my-8">
+          <!-- <div class="relative flex justify-center">
+            <span class="bg-inherit px-6 text-sm text-black-500 font-medium">
+              OR
+            </span>
+          </div>
+        </div>
+        <div>
+          <GoogleSignInButton
+            client:only="react"
+            onError={(error) => {
+              const errorContainer = document.getElementById("form-error");
+              const errorMessage = document.getElementById("error-message");
+              if (errorContainer && errorMessage) {
+                errorMessage.textContent = error.message;
+                errorContainer.classList.remove("hidden");
+              }
+            }}
+          /> -->
+          <div id="form-error" class="hidden">
+            <p
+              class="p-4 text-red-600 text-lg border-2 border-red-600 rounded-lg bg-red-50 flex items-center gap-2"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span id="error-message"></span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </Card>
+  </div>
+
+  <!-- Forgot Password Modal -->
+  <div id="forgot-password-modal" class="modal">
+    <div class="modal-content">
+      <div class="space-y-4">
+        <div class="flex justify-between items-center">
+          <h2 class="text-2xl font-bold">Reset Password</h2>
+          <button id="close-modal" class="text-gray-600 hover:text-gray-900">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <p class="text-gray-600">
+          Enter your email address and we'll send you a link to reset your
+          password.
+        </p>
+        <div class="space-y-2">
+          <label for="reset-email" class="text-lg font-medium">Email</label>
+          <input
+            type="email"
+            id="reset-email"
+            class="w-full h-12 bg-white/90 border-2 border-black rounded-xl text-lg px-3"
+          />
+        </div>
+        <button
+          id="send-reset-link"
+          class="w-full h-12 text-lg font-medium bg-[#FF5F1F] hover:bg-[#FF5F1F]/90 text-white rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center"
+        >
+          <span id="reset-button-text">Send Reset Link</span>
+          <svg
+            id="reset-button-spinner"
+            class="hidden animate-spin ml-2 h-5 w-5"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"></circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { authClient } from "src/lib/auth-client";
+
+  // Check if user is already authenticated and redirect if needed
+  const checkAuth = async () => {
+    try {
+      const { data: session, error } = await authClient.getSession();
+      // Only redirect if we have a valid session
+      if (session && !error) {
+        window.location.href = "/";
+      }
+    } catch (error) {
+      console.error("Error checking auth status:", error);
+    }
+  };
+
+  // Run the auth check when the page loads
+  document.addEventListener("DOMContentLoaded", checkAuth);
+
+  const errorContainer = document.getElementById("form-error")!;
+  const errorMessage = document.getElementById("error-message")!;
+  const submitButton = document.forms[0].querySelector(
+    "button[type=submit]",
+  ) as HTMLButtonElement;
+  const submitButtonText = document.getElementById("submit-button-text")!;
+  const submitButtonSpinner = document.getElementById("submit-button-spinner")!;
+
+  document.forms[0].addEventListener("submit", async (e) => {
+    e.preventDefault();
+    errorContainer.classList.add("hidden");
+
+    // Show loading state
+    submitButton.disabled = true;
+    submitButtonText.textContent = "Signing in...";
+    submitButtonSpinner.classList.remove("hidden");
+
+    const formData = new FormData(e.target as HTMLFormElement);
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    try {
+      const { data, error } = await authClient.signIn.email({
+        email,
+        password,
+      });
+
+      if (error) {
+        errorMessage.textContent = error.message ?? "An error occurred";
+        errorContainer.classList.remove("hidden");
+        return false;
+      }
+
+      if (data) {
+        // Get redirect destination from URL if it exists
+        const params = new URLSearchParams(window.location.search);
+        const redirectPath = params.get("redirect");
+        const eventId = params.get("event");
+
+        if (redirectPath) {
+          window.location.href = redirectPath;
+        } else if (eventId) {
+          window.location.href = `/events/${eventId}`;
+        } else {
+          window.location.href = "/";
+        }
+      }
+    } catch (error) {
+      errorMessage.textContent = "Failed to sign in. Please try again.";
+      errorContainer.classList.remove("hidden");
+      return false;
+    } finally {
+      // Reset button state
+      submitButton.disabled = false;
+      submitButtonText.textContent = "Sign in";
+      submitButtonSpinner.classList.add("hidden");
+    }
+  });
+
+  function setupModalHandlers() {
+    // Get elements
+    let modal = document.getElementById("forgot-password-modal")!;
+    const forgotPasswordLink = document.getElementById("forgot-password-link")!;
+    const closeModal = document.getElementById("close-modal")!;
+    const sendResetLink = document.getElementById(
+      "send-reset-link",
+    ) as HTMLButtonElement;
+    const resetEmail = document.getElementById(
+      "reset-email",
+    ) as HTMLInputElement;
+    const resetButtonText = document.getElementById(
+      "reset-button-text",
+    ) as HTMLElement;
+    const resetButtonSpinner = document.getElementById(
+      "reset-button-spinner",
+    ) as HTMLElement;
+
+    // Guard clause if elements aren't found
+    if (
+      !modal ||
+      !forgotPasswordLink ||
+      !closeModal ||
+      !sendResetLink ||
+      !resetEmail ||
+      !resetButtonText ||
+      !resetButtonSpinner
+    ) {
+      console.error("Required modal elements not found");
+      return;
+    }
+
+    // Remove any existing event listeners by cloning elements
+    const newForgotPasswordLink = forgotPasswordLink.cloneNode(true);
+    forgotPasswordLink.parentNode?.replaceChild(
+      newForgotPasswordLink,
+      forgotPasswordLink,
+    );
+
+    // Clone modal and its contents
+    const newModal = modal.cloneNode(true) as HTMLElement;
+    modal.parentNode?.replaceChild(newModal, modal);
+    modal = newModal;
+
+    // Re-get elements from the new modal
+    const newCloseModal = modal.querySelector("#close-modal")!;
+    const newSendResetLink = modal.querySelector(
+      "#send-reset-link",
+    ) as HTMLButtonElement;
+    const newResetEmail = modal.querySelector(
+      "#reset-email",
+    ) as HTMLInputElement;
+    const newResetButtonText = modal.querySelector(
+      "#reset-button-text",
+    ) as HTMLElement;
+    const newResetButtonSpinner = modal.querySelector(
+      "#reset-button-spinner",
+    ) as HTMLElement;
+
+    // Add new event listeners
+    newForgotPasswordLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      const emailInput = document.getElementById("email") as HTMLInputElement;
+      newResetEmail.value = emailInput?.value || "";
+      modal.classList.add("show");
+    });
+
+    // Prevent form submission when clicking inside modal
+    modal.querySelector(".modal-content")?.addEventListener("click", (e) => {
+      e.stopPropagation();
+    });
+
+    newCloseModal.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      modal.classList.remove("show");
+    });
+
+    modal.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (e.target === modal) {
+        modal.classList.remove("show");
+      }
+    });
+
+    newSendResetLink.addEventListener("click", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const email = newResetEmail.value;
+
+      if (!email) {
+        errorMessage.textContent = "Please enter your email address.";
+        errorContainer.classList.remove("hidden");
+        return;
+      }
+
+      // Show loading state
+      newSendResetLink.disabled = true;
+      newResetButtonText!.textContent = "Sending...";
+      newResetButtonSpinner!.classList.remove("hidden");
+
+      try {
+        const { error } = await authClient.forgetPassword({
+          email,
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+
+        if (error) {
+          errorMessage.textContent = error.message ?? "An error occurred";
+          errorContainer.classList.remove("hidden");
+          return;
+        }
+
+        modal.classList.remove("show");
+        errorMessage.textContent = "Password reset link sent to your email.";
+        errorContainer.classList.remove("hidden");
+        (errorContainer.firstElementChild as HTMLElement).classList.remove(
+          "text-red-600",
+          "border-red-600",
+          "bg-red-50",
+        );
+        (errorContainer.firstElementChild as HTMLElement).classList.add(
+          "text-green-600",
+          "border-green-600",
+          "bg-green-50",
+        );
+      } catch (error) {
+        errorMessage.textContent =
+          "Failed to send reset link. Please try again.";
+        errorContainer.classList.remove("hidden");
+      } finally {
+        // Reset button state
+        (newSendResetLink as HTMLButtonElement).disabled = false;
+        newResetButtonText!.textContent = "Send Reset Link";
+        newResetButtonSpinner!.classList.add("hidden");
+      }
+    });
+  }
+
+  // Run setup on both DOMContentLoaded and after view transitions
+  document.addEventListener("DOMContentLoaded", setupModalHandlers);
+  document.addEventListener("astro:page-load", setupModalHandlers);
+  setupModalHandlers();
+
+  // Keep existing password toggle functionality
+  const togglePassword = document.getElementById("toggle-password")!;
+  const passwordInput = document.getElementById("password") as HTMLInputElement;
+  passwordInput.type = "password";
+
+  togglePassword.addEventListener("click", () => {
+    const type = passwordInput.type === "password" ? "text" : "password";
+    passwordInput.type = type;
+    togglePassword.textContent = type === "password" ? "Show" : "Hide";
+  });
+
+  function updateRegisterLink() {
+    const registerLink = document.getElementById(
+      "register-link",
+    ) as HTMLAnchorElement;
+    if (registerLink) {
+      registerLink.href = `/createprofile${window.location.search}`;
+    }
+  }
+
+  // Update link when page loads
+  document.addEventListener("DOMContentLoaded", updateRegisterLink);
+  // Also update after view transitions
+  document.addEventListener("astro:page-load", updateRegisterLink);
+</script>

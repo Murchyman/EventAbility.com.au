@@ -1,0 +1,873 @@
+---
+import Layout from "@layouts/Default.astro";
+import Card from "@components/generic/Card.astro";
+import { turso } from "src/lib/turso";
+import { getSignedUrlForFile } from "src/lib/s3";
+import InterestsSelector from "@components/generic/InterestsSelector.astro";
+import { Image } from "astro:assets";
+
+const user = Astro.locals.user;
+
+// Check if user has a profile
+if (!user?.id) {
+  return Astro.redirect("/login");
+}
+const result = await turso.execute({
+  sql: "SELECT * FROM profile WHERE user_id = ?",
+  args: [user.id],
+});
+const profile = result.rows[0];
+if (!profile) {
+  return Astro.redirect("/createprofile");
+}
+
+// Get signed URL for profile photo
+const profilePhoto = await getSignedUrlForFile(user.id, "profile-pictures");
+---
+
+<Layout
+  title="Social Spot | Edit Profile"
+  pageTitle="Social Spot | Edit Profile"
+  description="Here you can edit your Social Spot profile information."
+>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.css"
+  />
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.js"
+  ></script>
+
+  <main class="bg-[#B8E8FF] p-6">
+    <section class="grid md:grid-cols-8 gap-8 mt-4">
+      <div class="col-span-8 md:col-start-3 md:col-span-4">
+        <Card>
+          <div class="space-y-6">
+            <!-- Profile Header Section -->
+            <div class="text-center">
+              <h1 class="text-2xl font-bold poppins mb-2">Edit Your Profile</h1>
+              <p class="text-gray-600">
+                Update your profile information and photo
+              </p>
+            </div>
+
+            <!-- Profile Photo Section -->
+            <div class="space-y-4">
+              <div class="brutal-card">
+                <div
+                  class="relative aspect-square w-full max-w-[240px] mx-auto overflow-hidden rounded-xl border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                >
+                  <Image
+                    id="profile-preview"
+                    src={profilePhoto}
+                    alt="Profile Photo"
+                    width={800}
+                    height={800}
+                    class="absolute top-0 left-0 w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+
+              <div class="text-center space-y-3">
+                <div class="relative inline-block">
+                  <input
+                    type="file"
+                    name="profile_photo"
+                    id="profile_photo"
+                    accept="image/*"
+                    class="hidden"
+                  />
+                  <button
+                    type="button"
+                    onclick="document.getElementById('profile_photo').click()"
+                    class="flex items-center gap-2 px-6 py-3 bg-[#FF5F1F] hover:bg-[#FF5F1F]/90 text-white rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-transform active:translate-y-1 active:shadow-[0px_0px_0px_0px_rgba(0,0,0,1)]"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                      ></path>
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    <span id="photoButtonText">Change Photo</span>
+                  </button>
+                </div>
+                <div id="photo-error" class="hidden">
+                  <p
+                    class="p-4 text-red-600 text-sm border-2 border-red-600 rounded-lg bg-red-50 flex items-center gap-2"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      ></path>
+                    </svg>
+                    <span>Only JPG and PNG files are allowed.</span>
+                  </p>
+                </div>
+                <p class="text-sm text-gray-600 max-w-sm mx-auto">
+                  Add a clear photo of yourself that shows your face. This helps
+                  others recognize you after events.
+                </p>
+              </div>
+            </div>
+
+            <!-- Profile Form -->
+            <form id="profile-form" class="space-y-6">
+              <!-- Basic Information Section -->
+              <div class="space-y-4">
+                <h2 class="text-xl font-semibold poppins">Basic Information</h2>
+
+                <!-- Email Section -->
+                <div class="space-y-2">
+                  <label class="flex flex-col gap-2">
+                    <span class="text-lg poppins">Email</span>
+                    <div class="p-2 text-gray-700 bg-gray-50 rounded">
+                      {user.email}
+                    </div>
+                    <div class="relative inline-block w-full text-center">
+                      <button
+                        type="button"
+                        id="change-email-btn"
+                        class="flex items-center gap-2 px-6 py-3 bg-[#FF5F1F] hover:bg-[#FF5F1F]/90 text-white rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-transform active:translate-y-1 active:shadow-[0px_0px_0px_0px_rgba(0,0,0,1)] mx-auto"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          class="h-5 w-5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                          ></path>
+                        </svg>
+                        <span>Change Email</span>
+                      </button>
+                    </div>
+                    <p
+                      class="text-sm text-gray-600 max-w-sm mx-auto text-center"
+                    >
+                      Change your email address. All future emails will be sent
+                      to this new address.
+                    </p>
+                  </label>
+                </div>
+
+                <label class="flex flex-col gap-2">
+                  <span class="text-lg poppins">First Name</span>
+                  <input
+                    type="text"
+                    id="first_name"
+                    name="first_name"
+                    value={profile.first_name?.toString() || ""}
+                    required
+                    maxlength="25"
+                    onblur="this.value = this.value.trim()"
+                    class="p-2 border-2 border-black rounded"
+                  />
+                  <p class="text-xs text-gray-500">Maximum 25 characters</p>
+                </label>
+
+                <label class="flex flex-col gap-2">
+                  <span class="text-lg poppins">Age</span>
+                  <input
+                    type="number"
+                    id="age"
+                    name="age"
+                    value={profile.age?.toString() || ""}
+                    required
+                    class="p-2 border-2 border-black rounded"
+                  />
+                </label>
+                <div id="age-error" class="hidden text-red-600 text-sm">
+                  Age must be between 18 and 120.
+                </div>
+
+                <!-- Add Instagram Handle Field -->
+                <label class="flex flex-col gap-2">
+                  <span class="text-lg poppins"
+                    >Instagram Handle (optional)</span
+                  >
+                  <div class="relative">
+                    <span
+                      class="absolute left-3 top-1/2 -translate-y-1/2 text-[#E1306C]"
+                      >@</span
+                    >
+                    <input
+                      type="text"
+                      name="instagram_handle"
+                      value={profile.instagram_handle?.toString() || ""}
+                      pattern="^[a-zA-Z0-9._]{1,30}$"
+                      class="p-2 pl-8 border-2 border-black rounded w-full"
+                      title="Please enter a valid Instagram handle without the @ symbol"
+                    />
+                  </div>
+                  <p class="text-xs text-gray-500">
+                    Enter without the @ symbol
+                  </p>
+                </label>
+              </div>
+
+              <!-- Interests Section -->
+              <div class="space-y-4">
+                <h2 class="text-xl font-semibold poppins">Your Interests</h2>
+                <p class="text-sm text-gray-600">
+                  Add your interests and hobbies - this helps people get to know
+                  you and find common ground!
+                </p>
+                <InterestsSelector
+                  initialInterests={profile.interests?.toString() || "[]"}
+                />
+              </div>
+
+              <!-- Form Messages -->
+              <div id="form-error" class="hidden">
+                <p
+                  class="p-4 text-red-600 text-lg border-2 border-red-600 rounded-lg bg-red-50 flex items-center gap-2"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    ></path>
+                  </svg>
+                  <span></span>
+                </p>
+              </div>
+
+              <div id="form-success" class="hidden">
+                <p
+                  class="p-4 text-green-600 text-lg border-2 border-green-600 rounded-lg bg-green-50 flex items-center gap-2"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  <span>Profile updated successfully!</span>
+                </p>
+              </div>
+
+              <!-- Submit Button -->
+              <button
+                type="submit"
+                class="w-full h-12 text-lg font-medium bg-[#FF5F1F] hover:bg-[#FF5F1F]/90 text-white rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-2"
+              >
+                <span id="submitText">Save Changes</span>
+                <div id="loadingSpinner" class="hidden">
+                  <svg
+                    class="animate-spin h-5 w-5"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      class="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      stroke-width="4"></circle>
+                    <path
+                      class="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                </div>
+              </button>
+            </form>
+          </div>
+        </Card>
+      </div>
+    </section>
+
+    <!-- Add crop modal markup -->
+    <div
+      id="cropModal"
+      class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center"
+    >
+      <div class="bg-white p-8 rounded-lg max-w-md w-full mx-4">
+        <h3 class="text-xl mb-6 poppins">Crop Your Photo</h3>
+        <div id="cropContainer" class="mb-6"></div>
+        <div class="flex justify-end gap-2">
+          <button id="cancelCrop" class="px-4 py-2 bg-gray-200 rounded"
+            >Cancel</button
+          >
+          <button
+            id="applyCrop"
+            class="px-4 py-2 bg-[#FF5F1F] text-white rounded">Apply</button
+          >
+        </div>
+      </div>
+    </div>
+
+    <!-- Email Change Modal -->
+    <div
+      id="emailModal"
+      class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center"
+    >
+      <div class="bg-white p-8 rounded-lg max-w-md w-full mx-4">
+        <h3 class="text-xl mb-6 poppins">Change Email Address</h3>
+        <form id="email-change-form" class="space-y-6">
+          <div id="email-error" class="hidden">
+            <p
+              class="p-4 text-red-600 text-sm border-2 border-red-600 rounded-lg bg-red-50 flex items-center gap-2"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span></span>
+            </p>
+          </div>
+          <div class="space-y-2">
+            <label for="new_email" class="text-sm font-medium"
+              >New Email Address</label
+            >
+            <input
+              type="email"
+              id="new_email"
+              name="new_email"
+              required
+              class="w-full p-2 border-2 border-black rounded"
+            />
+          </div>
+          <div class="flex justify-end gap-2">
+            <button
+              type="button"
+              id="cancelEmailChange"
+              class="px-4 py-2 bg-gray-200 rounded"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="px-4 py-2 bg-[#FF5F1F] text-white rounded"
+            >
+              <span id="emailSubmitText">Change Email</span>
+              <div id="emailLoadingSpinner" class="hidden">
+                <svg
+                  class="animate-spin h-5 w-5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"></circle>
+                  <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+              </div>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <style>
+    input,
+    select {
+      background-color: white;
+    }
+
+    /* Add these styles for the modal */
+    #cropModal {
+      display: none;
+    }
+
+    #cropModal.active {
+      display: flex;
+    }
+
+    /* Reset brutal card styles on mobile */
+    .brutal-card {
+      @apply bg-white;
+      filter: none;
+      border: none;
+      padding: 0;
+    }
+
+    /* Add hover effect to profile photo container */
+    .brutal-card > div {
+      @apply transition-transform hover:scale-[1.02];
+    }
+
+    /* Add these styles for the email modal */
+    #emailModal {
+      display: none;
+    }
+
+    #emailModal.active {
+      display: flex;
+    }
+  </style>
+</Layout>
+
+<script>
+  declare const Croppie: any;
+  import { authClient } from "src/lib/auth-client";
+  let croppie: any;
+  let croppedImageBlob: Blob | null = null;
+  let formModified = false;
+
+  // Move all the setup code into a function
+  function setupProfileHandlers() {
+    const errorMessageElement = document.getElementById("form-error")!;
+    const successMessageElement = document.getElementById("form-success")!;
+
+    document
+      .getElementById("profile-form")
+      ?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const formElement = e.target as HTMLFormElement;
+        const formData = new FormData(formElement);
+
+        if (croppedImageBlob) {
+          formData.delete("profile_photo");
+          formData.append("profile_photo", croppedImageBlob, "profile.jpg");
+        }
+
+        const age = parseInt(formData.get("age") as string, 10);
+        const ageError = document.getElementById("age-error");
+
+        // Check form validity first
+        if (!formElement.checkValidity()) {
+          formElement.reportValidity();
+          return;
+        }
+
+        if (isNaN(age) || age < 18 || age > 120) {
+          if (ageError) {
+            ageError.classList.remove("hidden");
+          }
+          errorMessageElement.classList.remove("hidden");
+          errorMessageElement.querySelector("span")!.innerText =
+            "Age must be between 18 and 120.";
+          return;
+        } else {
+          if (ageError) {
+            ageError.classList.add("hidden");
+          }
+        }
+
+        const fileInput = document.getElementById(
+          "profile_photo",
+        ) as HTMLInputElement;
+        const allowedTypes = ["image/jpeg", "image/png"];
+        const file = fileInput.files?.[0];
+
+        if (file && !allowedTypes.includes(file.type)) {
+          errorMessageElement.querySelector("span")!.innerText =
+            "Only JPG and PNG files are allowed.";
+          errorMessageElement.classList.remove("hidden");
+          return;
+        }
+
+        // Show loading state only after all validations pass
+        const submitButton = formElement.querySelector(
+          'button[type="submit"]',
+        ) as HTMLButtonElement;
+        const loadingSpinner = document.getElementById("loadingSpinner");
+        const submitText = document.getElementById("submitText");
+
+        if (loadingSpinner && submitText && submitButton) {
+          loadingSpinner.classList.remove("hidden");
+          submitText.textContent = "Saving Changes...";
+          submitButton.disabled = true;
+        }
+
+        errorMessageElement.classList.add("hidden");
+        successMessageElement.classList.add("hidden");
+
+        try {
+          const response = await fetch("/api/editProfile", {
+            method: "PUT",
+            body: formData,
+          });
+
+          if (response.ok) {
+            if (croppedImageBlob) {
+              const objectUrl = URL.createObjectURL(croppedImageBlob);
+              const previewImg = document.getElementById(
+                "profile-preview",
+              ) as HTMLImageElement;
+              if (previewImg) {
+                previewImg.src = objectUrl;
+              }
+            }
+
+            successMessageElement.classList.remove("hidden");
+            formModified = false;
+
+            // Reset button state after success
+            if (loadingSpinner && submitText && submitButton) {
+              loadingSpinner.classList.add("hidden");
+              submitText.textContent = "Save Changes";
+              submitButton.disabled = false;
+            }
+          } else {
+            // Hide loading state on error
+            if (loadingSpinner && submitText && submitButton) {
+              loadingSpinner.classList.add("hidden");
+              submitText.textContent = "Save Changes";
+              submitButton.disabled = false;
+            }
+            const data = await response.json();
+            errorMessageElement.querySelector("span")!.innerText =
+              data.error || "Failed to update profile";
+            errorMessageElement.classList.remove("hidden");
+          }
+        } catch (error) {
+          // Hide loading state on error
+          if (loadingSpinner && submitText && submitButton) {
+            loadingSpinner.classList.add("hidden");
+            submitText.textContent = "Save Changes";
+            submitButton.disabled = false;
+          }
+          errorMessageElement.querySelector("span")!.innerText =
+            "An error occurred while updating profile";
+          errorMessageElement.classList.remove("hidden");
+        }
+      });
+
+    const fileInput = document.getElementById(
+      "profile_photo",
+    ) as HTMLInputElement;
+    const buttonText = document.getElementById("photoButtonText");
+
+    if (fileInput) {
+      fileInput.addEventListener("change", () => {
+        // Clean up previous object URL
+        cleanupObjectUrls();
+
+        if (fileInput.files && fileInput.files[0]) {
+          const file = fileInput.files[0];
+          const allowedTypes = ["image/jpeg", "image/png"];
+          const maxSize = 20 * 1024 * 1024; // 20MB in bytes
+          const photoError = document.getElementById("photo-error");
+
+          if (!allowedTypes.includes(file.type)) {
+            if (photoError) {
+              photoError.classList.remove("hidden");
+            }
+            fileInput.value = "";
+            if (buttonText) buttonText.textContent = "Change Photo";
+            return;
+          }
+
+          if (file.size > maxSize) {
+            if (photoError) {
+              photoError.querySelector("span")!.textContent =
+                "Image file size must be less than 20MB";
+              photoError.classList.remove("hidden");
+            }
+            fileInput.value = "";
+            if (buttonText) buttonText.textContent = "Change Photo";
+            return;
+          }
+
+          // Hide error message if file is valid
+          if (photoError) {
+            photoError.classList.add("hidden");
+          }
+
+          // Read the file and show crop modal
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            if (!croppie) {
+              initCroppie();
+            }
+            showModal();
+            croppie.bind({
+              url: e.target ? e.target.result : "",
+            });
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+
+    // Initialize Croppie
+    function initCroppie() {
+      const cropContainer = document.getElementById("cropContainer");
+      if (cropContainer) {
+        croppie = new Croppie(cropContainer, {
+          viewport: { width: 300, height: 300, type: "square" },
+          boundary: { width: 300, height: 300 },
+          enableOrientation: true,
+        });
+      }
+    }
+
+    // Modal show/hide functions
+    const cropModal = document.getElementById("cropModal");
+
+    function showModal() {
+      cropModal?.classList.add("active");
+    }
+
+    function hideModal() {
+      cropModal?.classList.remove("active");
+    }
+
+    // Cancel crop
+    const cancelCropBtn = document.getElementById("cancelCrop");
+    const applyCropBtn = document.getElementById("applyCrop");
+
+    cancelCropBtn?.addEventListener("click", () => {
+      hideModal();
+      if (fileInput) fileInput.value = "";
+      if (buttonText) buttonText.textContent = "Upload Photo";
+      croppedImageBlob = null;
+      formModified = false;
+    });
+
+    // Apply crop
+    applyCropBtn?.addEventListener("click", () => {
+      croppie
+        .result({
+          type: "blob",
+          size: "viewport",
+          format: "jpeg",
+          quality: 1,
+        })
+        .then((blob: Blob) => {
+          croppedImageBlob = blob;
+          hideModal();
+          if (buttonText) buttonText.textContent = "Photo Added";
+          formModified = true;
+
+          // Update the preview image immediately with the cropped photo
+          const previewImg = document.getElementById(
+            "profile-preview",
+          ) as HTMLImageElement;
+          if (previewImg) {
+            // Revoke previous object URL if it exists to prevent memory leaks
+            if (previewImg.src.startsWith("blob:")) {
+              URL.revokeObjectURL(previewImg.src);
+            }
+            // Create and set new object URL from the cropped blob
+            const objectUrl = URL.createObjectURL(blob);
+            previewImg.src = objectUrl;
+          }
+
+          // Reset the file input so the same file can be selected again
+          if (fileInput) fileInput.value = "";
+
+          // Auto submit the form after applying crop
+          const form = document.getElementById(
+            "profile-form",
+          ) as HTMLFormElement;
+          if (form) {
+            form.requestSubmit();
+          }
+        });
+    });
+
+    // Add modal close handlers
+    const modal = document.getElementById("cropModal");
+
+    // Close on outside click
+    modal?.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        hideModal();
+        if (fileInput) fileInput.value = "";
+        if (buttonText) buttonText.textContent = "Upload Photo";
+        croppedImageBlob = null;
+        formModified = false;
+      }
+    });
+
+    // Close on Escape key
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && modal?.classList.contains("active")) {
+        hideModal();
+        if (fileInput) fileInput.value = "";
+        if (buttonText) buttonText.textContent = "Upload Photo";
+        croppedImageBlob = null;
+        formModified = false;
+      }
+    });
+  }
+
+  // Run setup on both DOMContentLoaded and after view transitions
+  document.addEventListener("DOMContentLoaded", setupProfileHandlers);
+  document.addEventListener("astro:page-load", setupProfileHandlers);
+  setupProfileHandlers();
+
+  // Add this near the top of the script section
+  function cleanupObjectUrls() {
+    const previewImg = document.getElementById(
+      "profile-preview",
+    ) as HTMLImageElement;
+    if (previewImg && previewImg.src.startsWith("blob:")) {
+      URL.revokeObjectURL(previewImg.src);
+    }
+  }
+
+  // Add email change functionality
+  function setupEmailChangeHandlers() {
+    const emailModal = document.getElementById("emailModal");
+    const changeEmailBtn = document.getElementById("change-email-btn");
+    const cancelEmailBtn = document.getElementById("cancelEmailChange");
+    const emailChangeForm = document.getElementById(
+      "email-change-form",
+    ) as HTMLFormElement | null;
+    const emailError = document.getElementById("email-error");
+    const emailSubmitText = document.getElementById("emailSubmitText");
+    const emailLoadingSpinner = document.getElementById("emailLoadingSpinner");
+
+    function showEmailModal() {
+      emailModal?.classList.add("active");
+      emailModal?.classList.remove("hidden");
+      emailModal?.classList.add("flex");
+    }
+
+    function hideEmailModal() {
+      emailModal?.classList.remove("active");
+      emailModal?.classList.add("hidden");
+      emailModal?.classList.remove("flex");
+      emailChangeForm?.reset();
+      if (emailError) {
+        emailError.classList.add("hidden");
+        emailError.querySelector("p")!.textContent = "";
+      }
+    }
+
+    changeEmailBtn?.addEventListener("click", showEmailModal);
+    cancelEmailBtn?.addEventListener("click", hideEmailModal);
+
+    // Close on outside click
+    emailModal?.addEventListener("click", (e) => {
+      if (e.target === emailModal) {
+        hideEmailModal();
+      }
+    });
+
+    // Close on Escape key
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && emailModal?.classList.contains("active")) {
+        hideEmailModal();
+      }
+    });
+
+    emailChangeForm?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const newEmail = (
+        document.getElementById("new_email") as HTMLInputElement
+      ).value;
+
+      // Show loading state
+      if (emailSubmitText && emailLoadingSpinner) {
+        emailSubmitText.textContent = "Changing Email...";
+        emailLoadingSpinner.classList.remove("hidden");
+      }
+
+      try {
+        const { error } = await authClient.changeEmail({
+          newEmail: newEmail,
+          callbackURL: "/profile",
+        });
+
+        if (error) {
+          if (error.message == "Couldn't update your email") {
+            throw new Error(
+              "Email address is already in use. Please use a different email address.",
+            );
+          }
+          throw new Error(error.message || "Failed to change email");
+        }
+
+        // Hide modal and show success message
+        hideEmailModal();
+        const successMessageElement = document.getElementById("form-success");
+        if (successMessageElement) {
+          successMessageElement.classList.remove("hidden");
+          successMessageElement.querySelector("span")!.textContent =
+            "Email change verification sent. Please check your new email to confirm the change.";
+        }
+
+        // Refresh the page after a short delay to show the success message
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+      } catch (error) {
+        emailError?.classList.remove("hidden");
+        emailError!.querySelector("span")!.textContent =
+          error instanceof Error ? error.message : "Failed to change email";
+      } finally {
+        // Reset loading state
+        if (emailSubmitText && emailLoadingSpinner) {
+          emailSubmitText.textContent = "Change Email";
+          emailLoadingSpinner.classList.add("hidden");
+        }
+      }
+    });
+  }
+
+  // Run setup on both DOMContentLoaded and after view transitions
+  document.addEventListener("DOMContentLoaded", setupEmailChangeHandlers);
+  document.addEventListener("astro:page-load", setupEmailChangeHandlers);
+  setupEmailChangeHandlers();
+</script>

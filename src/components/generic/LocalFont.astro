@@ -1,0 +1,69 @@
+---
+import { join } from "node:path";
+import { AstroFont } from "astro-font";
+
+const appDir = process.cwd();
+const getFontPath = (name: string) => join(appDir, "public", "fonts", name);
+---
+
+<script>
+  document.fonts.ready.then(() => {
+    document.documentElement.classList.add("fonts-loaded");
+  });
+</script>
+
+<AstroFont
+  config={[
+    {
+      display: "swap",
+      name: "Poppins",
+      selector: ".poppins",
+      fallback: "sans-serif",
+      src: [
+        {
+          preload: false,
+          style: "normal",
+          weight: "400",
+          path: getFontPath("poppins.ttf"),
+        },
+        {
+          preload: false,
+          style: "normal",
+          weight: "500",
+          path: getFontPath("Poppins-Medium.ttf"),
+        },
+        {
+          preload: false,
+          style: "normal",
+          weight: "600",
+          path: getFontPath("Poppins-SemiBold.ttf"),
+        },
+        {
+          preload: false,
+          style: "normal",
+          weight: "700",
+          path: getFontPath("Poppins-Bold.ttf"),
+        },
+        {
+          preload: false,
+          style: "normal",
+          weight: "800",
+          path: getFontPath("Poppins-ExtraBold.ttf"),
+        },
+      ],
+    },
+    {
+      display: "swap",
+      name: "Righteous",
+      fallback: "sans-serif",
+      selector: ".righteous",
+      src: [
+        {
+          preload: false,
+          style: "normal",
+          path: getFontPath("righteous.ttf"),
+        },
+      ],
+    },
+  ]}
+/>
