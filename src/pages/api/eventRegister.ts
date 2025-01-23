@@ -220,8 +220,8 @@ export async function POST(context: APIContext): Promise<Response> {
             Messages: [
               {
                 From: {
-                  Email: "noreply@socialspot.com.au",
-                  Name: "SocialSpot",
+                  Email: "noreply@eventability.com.au",
+                  Name: "Event Ability",
                 },
                 To: [{ Email: userProfile.email }],
                 Subject: `You're registered for ${event.name}! 🕺`,
@@ -244,7 +244,7 @@ export async function POST(context: APIContext): Promise<Response> {
                                 </div>
                                 <p style="margin: 0 0 30px; font-size: 16px; line-height: 1.5; color: black;">We'll send you a reminder before the event. Get ready to meet some amazing people!</p>
                                 <div style="text-align: center;">
-                                  <a href="https://socialspot.com.au/events/${eventId}" 
+                                  <a href="https://eventability.com.au/events/${eventId}" 
                                      style="display: inline-block; background-color: black; color: white; padding: 24px 40px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 16px;">
                                     View Event Details
                                   </a>

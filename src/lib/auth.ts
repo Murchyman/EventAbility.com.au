@@ -22,7 +22,7 @@ export const auth = betterAuth({
         Messages: [
           {
             From: {
-              Email: "noreply@socialspot.com.au",
+              Email: "noreply@eventability.com.au",
               Name: "EventAbility",
             },
             To: [
@@ -84,7 +84,7 @@ export const auth = betterAuth({
         Messages: [
           {
             From: {
-              Email: "noreply@socialspot.com.au",
+              Email: "noreply@eventability.com.au",
               Name: "EventAbility",
             },
             To: [

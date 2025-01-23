@@ -91,11 +91,11 @@ export const handler: Handler = async (event, context) => {
               Messages: [
                 {
                   From: {
-                    Email: "noreply@socialspot.com.au",
-                    Name: "SocialSpot",
+                    Email: "noreply@eventability.com.au",
+                    Name: "Event Ability",
                   },
                   To: [{ Email: user.email }],
-                  Subject: `New Messages Waiting for You on SocialSpot! 💌`,
+                  Subject: `New Messages Waiting for You on Event Ability!`,
                   HTMLPart: `
                   <!DOCTYPE html>
                   <html>
@@ -106,7 +106,7 @@ export const handler: Handler = async (event, context) => {
                             <table role="presentation" style="max-width: 600px; margin: 0 auto; background-color: #C5FFE6; border: 3px solid black; border-radius: 12px; box-shadow: 7px 7px 0 rgba(0,0,0,1);">
                               <tr>
                                 <td style="padding: 30px;">
-                                  <h1 style="margin: 0 0 20px; font-size: 28px; font-weight: bold; color: black;">Hey ${user.first_name}! 💌</h1>
+                                  <h1 style="margin: 0 0 20px; font-size: 28px; font-weight: bold; color: black;">Hey ${user.first_name}!</h1>
                                   <p style="margin: 0 0 20px; font-size: 18px; line-height: 1.5; color: black;">
                                     <strong>You've got mail!</strong> ${user.unique_senders} ${user.unique_senders === 1 ? 'person has sent you a message' : 'people have sent you messages'}.
                                   </p>
