@@ -80,11 +80,11 @@ function distributeColors(colors: string[]) {
 }
 
 export const GET: APIRoute = async () => {
-  const link = 'https://socialspot.com.au';
+  const link = 'https://eventability.com.au';
   
   // Use the distributed colors algorithm
   const distributedColors = distributeColors(colors);
-  const textLength = "SocialSpot".length;
+  const textLength = "EventAbility".length;
   const textColors = Array.from(
     { length: textLength },
     (_, i) => distributedColors[i % distributedColors.length]
@@ -104,7 +104,7 @@ export const GET: APIRoute = async () => {
         <div style="display: flex; flex-direction: column; gap: 2rem; text-align: center;">  
           <div style="display: flex; justify-content: center; gap: 0.1em;">
             ${
-              "SocialSpot".split("").map((letter, index) => `
+              "EventAbility".split("").map((letter, index) => `
                 <span style="
                   font-size: 96px;
                   font-weight: bold;
@@ -129,7 +129,7 @@ export const GET: APIRoute = async () => {
             letter-spacing: -0.5px;
             tracking-tight: true;
           ">
-            Over Dating Apps?
+            Let's be friends!
           </p>
           <br/>
           <p style="
@@ -145,7 +145,7 @@ export const GET: APIRoute = async () => {
             margin-top: -0.5rem;
             tracking-tight: true;
           ">
-            Try Real Life
+            Join our welcoming community.
           </p>
           <br/>
           <p style="
@@ -157,7 +157,8 @@ export const GET: APIRoute = async () => {
             font-family: 'Poppins';
             padding: 0 1rem;
           ">
-            Skip pointless texting and disappointing first dates.
+            Find friends who understand your journey
+                        
           </p>
           <p style="
             font-size: 24px;
@@ -168,7 +169,7 @@ export const GET: APIRoute = async () => {
             font-family: 'Poppins';
             padding: 0 1rem;
           ">
-            At our events, you'll meet other singles
+           and share your interests  
           </p>
           <p style="
             font-size: 24px;
@@ -179,7 +180,7 @@ export const GET: APIRoute = async () => {
             font-family: 'Poppins';
             padding: 0 1rem;
           ">
-            in person, connect naturally,
+            through accessible,
           </p>
           <p style="
             font-size: 24px;
@@ -190,9 +191,9 @@ export const GET: APIRoute = async () => {
             font-family: 'Poppins';
             padding: 0 1rem;
           ">
-            and reconnect online after the event.
+            inclusive
+                        events.
           </p>
-
 
         </div>
       </div>

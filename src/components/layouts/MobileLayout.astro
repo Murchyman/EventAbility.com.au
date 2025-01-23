@@ -37,19 +37,19 @@ const howItWorksSteps = [
         icon: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z",
         title: "1. Find an Event",
         description:
-            "Tired of feeling isolated and disconnected? Join our accessible and inclusive events designed for people with disabilities! Our welcoming community events let you meet potential friends face-to-face in comfortable, supportive settings. No more barriers - connect with people who understand your journey.",
+            "Tired of feeling isolated or struggling to find social activities? Our events are designed with accessibility in mind, making it easy for you to join and connect with others who share your interests. Every event is carefully planned to ensure everyone can participate comfortably.",
     },
     {
         icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z",
         title: "2. Connect with Others",
         description:
-            "Meet new friends in a natural, pressure-free environment. No awkward introductions or forced conversations - just organic interactions through shared activities. Get to know people who share your interests and experiences in a supportive community.",
+            "Meet new friends in a welcoming, understanding environment. No pressure or judgment - just genuine connections through shared experiences and activities. Our events are designed to foster natural conversations and meaningful friendships.",
     },
     {
         icon: "M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z",
-        title: "3. Stay in Touch",
+        title: "3. Stay Connected",
         description:
-            "After the event, connect with the people you met through our accessible platform. Send friend requests to those you'd like to keep in touch with. Our platform makes it easy to maintain friendships and plan future meetups in a comfortable, inclusive way.",
+            "After the event, keep in touch with your new friends through our platform. Plan future meetups, chat, and discover more events where you can meet up again. Our community is here to support lasting friendships!",
     },
 ];
 ---
@@ -62,23 +62,21 @@ const howItWorksSteps = [
         >
             <div class="flex flex-col gap-6 md:w-1/2 text-center items-center">
                 <h1
-                    class="poppins text-4xl md:text-5xl lg:text-6xl text-black font-bold leading-tight tracking-tight text-center"
+                    class="poppins text-3xl md:text-4xl lg:text-6xl text-black font-semibold leading-tight tracking-tight"
                 >
-                    Connect & Belong<br />
+                    Find Your Community<br />
                     <span class="font-extrabold block mt-2"
-                        >Your Journey, Your Community</span
+                        >Make Real Connections</span
                     >
                 </h1>
-                <p
-                    class="poppins text-lg md:text-xl leading-relaxed text-center max-w-[600px]"
-                >
+                <p class="poppins text-lg md:text-2xl leading-relaxed">
                     Join our welcoming community designed for people with
                     disabilities. Find friends who understand your journey and
                     share your interests through accessible, inclusive events.
                 </p>
-                <div class="flex gap-4 justify-center">
-                    <RainbowButton href="/events">
-                        Discover Accessible Events
+                <div class="flex gap-4 justify-center md:justify-start">
+                    <RainbowButton href="/events" class="text-lg">
+                        View Upcoming Events
                     </RainbowButton>
                 </div>
             </div>
@@ -138,13 +136,12 @@ const howItWorksSteps = [
                                     class="absolute w-6 h-6 bg-white transform rotate-45 left-1/2 -translate-x-1/2 -top-3"
                                 >
                                 </div>
-                                <p class="poppins text-lg text-center">
-                                    "It's challenging to find places where I
-                                    feel truly welcome and understood. Most
-                                    social spaces aren't designed with
-                                    accessibility in mind, and it's hard to
-                                    connect with people who understand my
-                                    experiences."
+                                <p class="poppins text-lg">
+                                    "It's hard to make meaningful connections...
+                                    my disability makes it challenging to get
+                                    out and meet new people. I wish there was an
+                                    easier way to connect with others who
+                                    understand are in a similar situation"
                                 </p>
                             </div>
                         </div>
@@ -226,13 +223,11 @@ const howItWorksSteps = [
                                     class="absolute w-6 h-6 bg-white transform rotate-45 left-1/2 -translate-x-1/2 -top-3"
                                 >
                                 </div>
-                                <p class="poppins text-lg text-center">
-                                    "I love Social Spot events! It's so
-                                    refreshing to be in a space where
-                                    accessibility and inclusion come first. I've
-                                    made genuine friends who understand my
-                                    experiences, and the activities are always
-                                    designed with everyone in mind!"
+                                <p class="poppins text-lg">
+                                    "I love EventAbility events! It's so nice to
+                                    just show up, be myself, and meet people in
+                                    a natural way. There's no problems just fun
+                                    group activities"
                                 </p>
                             </div>
                         </div>
@@ -390,7 +385,7 @@ const howItWorksSteps = [
                     Host Inclusive Events
                 </h2>
                 <p class="text-lg md:text-xl poppins max-w-2xl mx-auto">
-                    Partner with Social Spot to create accessible, welcoming
+                    Partner with EventAbility to create accessible, welcoming
                     spaces for our community. We handle the platform, you create
                     inclusive experiences that bring people together.
                 </p>
@@ -442,8 +437,8 @@ const howItWorksSteps = [
                             Zero Tech Hassle
                         </h3>
                         <p class="">
-                            We manage payments, marketing, and matching. You
-                            focus on creating great experiences.
+                            We manage payments, marketing, and reconnecting
+                            attendees. You focus on creating great experiences.
                         </p>
                     </div>
                 </Card>

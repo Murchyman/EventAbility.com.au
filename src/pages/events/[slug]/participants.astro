@@ -29,7 +29,7 @@ if (eventExists.rows.length === 0) {
   });
 }
 
-// Check if event is in matching period (within 7 days after end_time)
+// Check if event is in connection period (within 7 days after end_time)
 const eventCheck = eventExists.rows[0];
 if (!eventCheck?.end_time) {
   return new Response('Invalid event data', { status: 400 });
@@ -40,17 +40,17 @@ const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
 if (eventEndTime > now || eventEndTime <= oneWeekAgo) {
   return Astro.redirect('/');
-  //return new Response('Event is not in matching period', { status: 400 });  
+  //return new Response('Event is not in connection period', { status: 400 });  
 }
 
 // Update SQL query to fetch email from user table
-// Query to get all participants for an event along with their profile info and match status
+// Query to get all participants for an event along with their profile info and friend status
 // - Gets basic profile info (id, user_id, email, name, region, age, interests) 
 // - Gets event details (id, name, start/end time, location)
-// - Gets match status between current user and each participant (if they've matched)
-// - Gets who initiated the match (user_id_1) if one exists
+// - Gets friend status between current user and each participant (if they've connected)
+// - Gets who initiated the connection (user_id_1) if one exists
 // - Excludes the current user from results
-// - Excludes deleted matches
+// - Excludes deleted connections
 const data = await turso.execute({
   sql: `SELECT 
     p.id, p.user_id, u.email, p.first_name, p.region, p.age, p.interests, p.instagram_handle, 
@@ -228,7 +228,7 @@ for (let i = 0; i < participants.length; i++) {
                               {participant.match_status === "matched" && (
                                 <button
                                   type="button"
-                                  class="delete-match-btn w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 border-b border-gray-100"
+                                  class="remove-friend-btn w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 border-b border-gray-100"
                                   data-user-id={participant.user_id}
                                   data-user-name={participant.first_name}
                                 >
@@ -260,7 +260,7 @@ for (let i = 0; i < participants.length; i++) {
                         <div class="mt-auto -mx-4 -mb-4 px-4 pb-4 space-y-2">
                           <button
                             class={[
-                              "match-btn w-full px-6 py-3 rounded-lg font-bold transition-all",
+                              "connect-btn w-full px-6 py-3 rounded-lg font-bold transition-all",
                               {
                                 "bg-black text-white hover:opacity-90":
                                   !participant.match_status ||
@@ -276,8 +276,8 @@ for (let i = 0; i < participants.length; i++) {
                             ]}
                             data-user-id={participant.user_id}
                             data-event-id={event.event_id}
-                            data-match-status={participant.match_status}
-                            data-match-initiator={participant.match_initiator}
+                            data-friend-status={participant.match_status}
+                            data-friend-initiator={participant.match_initiator}
                             disabled={
                               participant.match_status === "matched" ||
                               (participant.match_status === "pending" &&
@@ -285,10 +285,10 @@ for (let i = 0; i < participants.length; i++) {
                             }
                           >
                             {participant.match_status === "matched"
-                              ? "Connected!"
+                              ? "Connected"
                               : participant.match_status === "pending" &&
                                 participant.match_initiator === currentUserId
-                              ? "Request Sent!"
+                              ? "Connection Pending"
                               : "Connect"}
                           </button>
                           {participant.match_status === "matched" && (
@@ -398,7 +398,7 @@ for (let i = 0; i < participants.length; i++) {
                           {participant.match_status === "matched" && (
                             <button
                               type="button"
-                              class="delete-match-btn w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 border-b border-gray-100"
+                              class="remove-friend-btn w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 border-b border-gray-100"
                               data-user-id={participant.user_id}
                               data-user-name={participant.first_name}
                             >
@@ -430,7 +430,7 @@ for (let i = 0; i < participants.length; i++) {
                     <div class="mt-auto -mx-4 -mb-4 px-4 pb-4 space-y-2">
                       <button
                         class={[
-                          "match-btn w-full px-6 py-3 rounded-lg font-bold transition-all",
+                          "connect-btn w-full px-6 py-3 rounded-lg font-bold transition-all",
                           {
                             "bg-black text-white hover:opacity-90":
                               !participant.match_status ||
@@ -446,8 +446,8 @@ for (let i = 0; i < participants.length; i++) {
                         ]}
                         data-user-id={participant.user_id}
                         data-event-id={event.event_id}
-                        data-match-status={participant.match_status}
-                        data-match-initiator={participant.match_initiator}
+                        data-friend-status={participant.match_status}
+                        data-friend-initiator={participant.match_initiator}
                         disabled={
                           participant.match_status === "matched" ||
                           (participant.match_status === "pending" &&
@@ -455,10 +455,10 @@ for (let i = 0; i < participants.length; i++) {
                         }
                       >
                         {participant.match_status === "matched"
-                          ? "Connected!"
+                          ? "Connected"
                           : participant.match_status === "pending" &&
                             participant.match_initiator === currentUserId
-                          ? "Request Sent!"
+                          ? "Connection Pending"
                           : "Connect"}
                       </button>
                       {participant.match_status === "matched" && (
@@ -587,7 +587,7 @@ for (let i = 0; i < participants.length; i++) {
       opacity: 1;
     }
 
-    .match-btn:not(:disabled):hover {
+    .connect-btn:not(:disabled):hover {
       transform: translateY(1px);
     }
   </style>
@@ -603,7 +603,7 @@ for (let i = 0; i < participants.length; i++) {
     return chatButton;
   }
 
-  document.querySelectorAll(".match-btn").forEach((button) => {
+  document.querySelectorAll(".connect-btn").forEach((button) => {
     button.addEventListener("click", async (e) => {
       const btn = e.currentTarget;
       try {
@@ -754,7 +754,7 @@ for (let i = 0; i < participants.length; i++) {
     deleteMatchModal.classList.add("hidden");
   }
 
-  document.querySelectorAll(".delete-match-btn").forEach((button) => {
+  document.querySelectorAll(".remove-friend-btn").forEach((button) => {
     button.addEventListener("click", () => {
       const userId = button.dataset.userId;
       const userName = button.dataset.userName;
@@ -864,7 +864,7 @@ for (let i = 0; i < participants.length; i++) {
     opacity: 1;
   }
 
-  .match-btn:not(:disabled):hover {
+  .connect-btn:not(:disabled):hover {
     transform: translateY(1px);
   }
 </style>

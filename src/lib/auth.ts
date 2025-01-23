@@ -23,7 +23,7 @@ export const auth = betterAuth({
           {
             From: {
               Email: "noreply@socialspot.com.au",
-              Name: "SocialSpot",
+              Name: "EventAbility",
             },
             To: [
               {
@@ -43,7 +43,7 @@ export const auth = betterAuth({
             <tr>
               <td style="padding: 30px;">
                 <h1 style="margin: 0 0 20px; font-size: 28px; font-weight: bold; color: black;">Email Verification Required</h1>
-                <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.5; color: #4B5563;">Welcome to SocialSpot</p>
+                <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.5; color: #4B5563;">Welcome to EventAbility</p>
                 <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.5; color: #4B5563;">To complete your registration and access all features, please verify your email address.</p>
                 <p style="margin: 0 0 30px; font-size: 16px; line-height: 1.5; color: #4B5563;">Click the button below to verify your email address and get started!</p>
                 <div style="text-align: center;">
@@ -85,7 +85,7 @@ export const auth = betterAuth({
           {
             From: {
               Email: "noreply@socialspot.com.au",
-              Name: "SocialSpot",
+              Name: "EventAbility",
             },
             To: [
               {

@@ -15,7 +15,7 @@ export default defineConfig({
     checkOrigin: true,
   },
   
-  site: "https://socialspot.com.au",
+  site: "https://eventability.com.au",
   trailingSlash: "ignore",
   integrations: [react(), sitemap(), UnoCSS({ injectReset: true }), compress(),partytown({ config: { forward: ["dataLayer.push"] } })],
 });

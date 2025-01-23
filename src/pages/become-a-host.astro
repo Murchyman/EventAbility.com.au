@@ -5,15 +5,16 @@ import RainbowButton from "@components/generic/RainbowButton.astro";
 
 // Fixed bright colors from RainbowButton
 const letterColors = {
-    S: "#ff66cc", // Pink
-    o: "#bb66ff", // Purple
-    c: "#33ddff", // Blue
-    i: "#ffdd33", // Yellow
-    a: "#33ffbb", // Mint
-    l: "#ff66cc", // Pink
-    " ": "#FFFFFF", // White for space
-    p: "#bb66ff", // Purple
-    t: "#33ddff", // Blue
+    E: "#ff66cc", // Pink
+    v: "#bb66ff", // Purple
+    e: "#33ddff", // Blue
+    n: "#ffdd33", // Yellow
+    t: "#33ffbb", // Mint
+    A: "#ff66cc", // Pink
+    b: "#bb66ff", // Purple
+    i: "#33ddff", // Blue
+    l: "#ffdd33", // Yellow
+    y: "#33ffbb", // Mint
 };
 
 const benefits = [
@@ -27,13 +28,13 @@ const benefits = [
         icon: "M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z",
         title: "Any Event Format",
         description:
-            "Any event format you want. Speed dating, mixers, workshops, anything you can think of - create events that work for you.",
+            "Any event format you want. Community gatherings, workshops, social meetups, anything you can think of - create events that work for everyone.",
     },
     {
         icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z",
         title: "Zero Tech Hassle",
         description:
-            "Sit back and relax. We handle the tech, payments, marketing, and matching all you need to do is do what you do best and create great experiences for your patrons.",
+            "Sit back and relax. We handle the tech, payments, marketing, and messaging all you need to do is do what you do best and create great experiences for your patrons.",
     },
 ];
 
@@ -46,9 +47,9 @@ const features = [
     },
     {
         icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z",
-        title: "Quality Attendees",
+        title: "Diverse Community",
         description:
-            "We have a growing community of engaged, social singles who are looking for meaningful connections. We also have a growing database of potential attendees who we can match to your event.",
+            "We have a growing community of engaged individuals who are looking for inclusive and accessible events. We can help connect potential attendees to your event based on interests and accessibility needs.",
     },
     {
         icon: "M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z",
@@ -81,9 +82,9 @@ const steps = [
 ---
 
 <Layout
-    title="Become a Host | Social Spot"
-    pageTitle="Become a Host | Social Spot"
-    description="Partner with Social Spot to host engaging singles events. You keep 100% of ticket sales while we handle the tech, marketing, and matching."
+    title="Become a Host | EventAbility"
+    pageTitle="Become a Host | EventAbility"
+    description="Partner with EventAbility to host inclusive and accessible events. You keep 100% of ticket sales while we handle the tech, marketing, and messaging."
 >
     <div class="bg-gradient-to-b from-[#B8E8FF] to-white min-h-screen">
         <main class="max-w-[1400px] mx-auto">
@@ -96,20 +97,22 @@ const steps = [
                         Partner With<br />
                         <span class="flex">
                             {
-                                "Social Spot".split("").map((letter, index) => (
-                                    <span
-                                        class="logo-text"
-                                        style={{
-                                            // @ts-ignore
-                                            color: letterColors[letter],
-                                            animation: `colorCycle 4s linear infinite, float 2s ease-in-out infinite`,
-                                            animationDelay: `${index * 0.2}s, ${index * 0.1}s`,
-                                            display: "inline-block",
-                                        }}
-                                    >
-                                        {letter}
-                                    </span>
-                                ))
+                                "EventAbility"
+                                    .split("")
+                                    .map((letter, index) => (
+                                        <span
+                                            class="logo-text"
+                                            style={{
+                                                // @ts-ignore
+                                                color: letterColors[letter],
+                                                animation: `colorCycle 4s linear infinite, float 2s ease-in-out infinite`,
+                                                animationDelay: `${index * 0.2}s, ${index * 0.1}s`,
+                                                display: "inline-block",
+                                            }}
+                                        >
+                                            {letter}
+                                        </span>
+                                    ))
                             }
                         </span>
                     </h1>
@@ -166,11 +169,10 @@ const steps = [
                                             d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
                                         ></path>
                                     </svg>
-                                    <span class="text-lg"
-                                        >You keep 100% of food & drink or any
-                                        other purchases the customer makes when
-                                        attending your event</span
-                                    >
+                                    <span class="text-lg">
+                                        You keep 100% of food & drink or any
+                                        other purchases made at your event
+                                    </span>
                                 </li>
                                 <li class="flex items-start gap-3">
                                     <svg
@@ -183,10 +185,10 @@ const steps = [
                                             d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
                                         ></path>
                                     </svg>
-                                    <span class="text-lg"
-                                        >15% booking fee charged to customers
-                                        covers our costs</span
-                                    >
+                                    <span class="text-lg">
+                                        15% booking fee charged to customers
+                                        covers our costs
+                                    </span>
                                 </li>
                                 <li class="flex items-start gap-3">
                                     <svg
@@ -199,10 +201,10 @@ const steps = [
                                             d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
                                         ></path>
                                     </svg>
-                                    <span class="text-lg"
-                                        >Still 100% Free to host free events
-                                        with no ticket price - no hidden fees</span
-                                    >
+                                    <span class="text-lg">
+                                        Still 100% Free to host free events with
+                                        no ticket price - no hidden fees
+                                    </span>
                                 </li>
                             </ul>
                         </div>
@@ -217,8 +219,8 @@ const steps = [
                         How it works
                     </h2>
                     <p class="text-xl max-w-2xl mx-auto poppins">
-                        Three simple steps to host your first event with Social
-                        Spot
+                        Three simple steps to host your first event with
+                        EventAbility
                     </p>
                 </div>
                 <div class="max-w-6xl mx-auto">

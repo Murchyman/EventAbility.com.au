@@ -7,25 +7,25 @@ import Image from "astro/components/Image.astro";
 // Data
 const images = [
     {
-        src: "https://media.socialspot.com.au/girlsbeach.webp",
+        src: "https://media.socialspot.com.au/yoga.jpg",
         alt: "Beach",
         className: "top-0 left-0 w-[55%] h-[45%]",
         rotation: "-3deg",
     },
     {
-        src: "https://media.socialspot.com.au/outside.webp",
+        src: "https://media.socialspot.com.au/outsidewheelchair.webp",
         alt: "Group activity",
         className: "bottom-0 left-[5%] w-[55%] h-[45%]",
         rotation: "2deg",
     },
     {
-        src: "https://media.socialspot.com.au/tapsmooloolaba.webp",
+        src: "https://media.socialspot.com.au/bardisabled.jpg",
         alt: "People enjoying a social event",
         className: "top-[10%] right-0 w-[45%] h-[40%]",
         rotation: "-2deg",
     },
     {
-        src: "https://media.socialspot.com.au/girlsIceBath.webp",
+        src: "https://media.socialspot.com.au/drinkswheelchair.jpg",
         alt: "Ice bath",
         className: "bottom-[10%] right-[5%] w-[45%] h-[40%]",
         rotation: "3deg",
@@ -49,7 +49,7 @@ const howItWorksSteps = [
         icon: "M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z",
         title: "3. Stay Connected",
         description:
-            "After the event, keep in touch with your new friends through our accessible platform. Plan future meetups, join group chats, or discover more events where you can meet up again. Our community is here to support lasting friendships!",
+            "After the event, keep in touch with your new friends through our platform. Plan future meetups, chat, and discover more events where you can meet up again. Our community is here to support lasting friendships!",
     },
 ];
 ---
@@ -57,7 +57,7 @@ const howItWorksSteps = [
 <div class="hidden md:block">
     {/* Hero Section */}
     <section id="about" class="grid md:grid-cols-1 mt-4">
-        <h2 class="hidden">About Social Spot</h2>
+        <h2 class="hidden">About EventAbility</h2>
         <Card>
             <div
                 class="flex flex-col md:flex-row justify-between items-center gap-8 py-8 px-4"
@@ -69,7 +69,9 @@ const howItWorksSteps = [
                         class="poppins text-3xl md:text-4xl lg:text-6xl text-black font-semibold leading-tight tracking-tight"
                     >
                         Find Your Community<br />
-                        Make Real Connections
+                        <span class="font-extrabold block mt-2"
+                            >Make Real Connections</span
+                        >
                     </h1>
                     <p class="poppins text-lg md:text-2xl leading-relaxed">
                         Join our welcoming community designed for people with
@@ -79,7 +81,7 @@ const howItWorksSteps = [
                     </p>
                     <div class="flex gap-4 justify-center md:justify-start">
                         <RainbowButton href="/events" class="text-lg">
-                            Discover Accessible Events
+                            View Upcoming Events
                         </RainbowButton>
                     </div>
                 </div>
@@ -129,7 +131,7 @@ const howItWorksSteps = [
                             <div class="w-24 h-24 shrink-0">
                                 <Image
                                     src="https://media.socialspot.com.au/hopelessWoman.webp"
-                                    alt="Frustrated with dating apps"
+                                    alt="Frustrated"
                                     width={96}
                                     height={96}
                                     class="w-full h-full object-cover rounded-full"
@@ -143,11 +145,9 @@ const howItWorksSteps = [
                                 <p class="poppins text-lg">
                                     "It's hard to make meaningful connections...
                                     my disability makes it challenging to get
-                                    out and meet new people. When I do go
-                                    places, I often feel isolated or like people
-                                    don't know how to approach me. I wish there
-                                    was an easier way to connect with others who
-                                    understand what I'm going through."
+                                    out and meet new people. I wish there was an
+                                    easier way to connect with others who
+                                    understand are in a similar situation"
                                 </p>
                             </div>
                         </div>
@@ -225,7 +225,7 @@ const howItWorksSteps = [
                                 >
                                 </div>
                                 <p class="poppins text-lg">
-                                    "I love Social Spot events! It's so nice to
+                                    "I love EventAbility events! It's so nice to
                                     just show up, be myself, and meet people in
                                     a natural way. There's no problems just fun
                                     group activities"
@@ -380,10 +380,10 @@ const howItWorksSteps = [
                         Own a Venue? Host Inclusive Events
                     </h2>
                     <p class="text-lg md:text-xl poppins max-w-2xl mx-auto">
-                        Partner with Social Spot to create accessible, welcoming
-                        spaces for our community. We handle the platform while
-                        you create inclusive experiences that bring people
-                        together.
+                        Partner with EventAbility to create accessible,
+                        welcoming spaces for our community. We handle the
+                        platform while you create inclusive experiences that
+                        bring people together.
                     </p>
                 </div>
 
@@ -437,8 +437,9 @@ const howItWorksSteps = [
                                 Zero Tech Hassle
                             </h3>
                             <p class="">
-                                We manage payments, marketing, and matching. You
-                                focus on creating great experiences.
+                                We manage payments, marketing, and reconnecting
+                                attendees. You focus on creating great
+                                experiences.
                             </p>
                         </div>
                     </Card>
