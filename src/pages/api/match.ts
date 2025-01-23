@@ -98,7 +98,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
                     Email: user1.email,
                   },
                 ],
-                Subject: `New Friend Connection at Social Spot! 🎉`,
+                Subject: `New Friend Connection at Event Ability! 🎉`,
                 TextPart: `Great news! ${user2.name} from ${event.name} wants to connect with you!`,
                 HTMLPart: `
 <!DOCTYPE html>
