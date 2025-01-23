@@ -4,7 +4,9 @@ export const securityHeaders = {
   'Content-Security-Policy': [
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://js.pusher.com https://cdnjs.cloudflare.com https://www.googletagmanager.com https://js.stripe.com https://app.cal.com https://*.cal.com",
+    // Add cdnjs.cloudflare.com to style-src
     "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com",
+    // Rest of the directives remain the same
     "img-src 'self' data: blob: https://*.r2.cloudflarestorage.com https://*.s3.amazonaws.com https://www.w3.org/2000/svg https://media.socialspot.com.au",
     "font-src 'self'",
     "connect-src 'self' blob: https://*.pusher.com wss://*.pusher.com https://*.amazonaws.com https://*.googletagmanager.com https://api.stripe.com https://cal.com https://*.cal.com",
