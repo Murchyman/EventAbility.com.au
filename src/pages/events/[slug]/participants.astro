@@ -259,21 +259,15 @@ for (let i = 0; i < participants.length; i++) {
 
                         <div class="mt-auto -mx-4 -mb-4 px-4 pb-4 space-y-2">
                           <button
-                            class={[
-                              "connect-btn w-full px-6 py-3 rounded-lg font-bold transition-all",
-                              {
-                                "bg-black text-white hover:opacity-90":
-                                  !participant.match_status ||
-                                  (participant.match_status === "pending" &&
-                                    participant.match_initiator !==
-                                      currentUserId),
-                                "bg-blue-500 text-white":
-                                  participant.match_status === "pending" &&
-                                  participant.match_initiator === currentUserId,
-                                "bg-green-500 text-white":
-                                  participant.match_status === "matched",
-                              },
-                            ]}
+                            class={`connect-btn w-full px-6 py-3 rounded-lg font-bold transition-all ${
+                              !participant.match_status || (participant.match_status === "pending" && participant.match_initiator !== currentUserId)
+                                ? "bg-black text-white hover:opacity-90"
+                                : participant.match_status === "pending" && participant.match_initiator === currentUserId
+                                ? "bg-blue-500 text-white"
+                                : participant.match_status === "matched"
+                                ? "bg-green-500 text-white"
+                                : ""
+                            }`}
                             data-user-id={participant.user_id}
                             data-event-id={event.event_id}
                             data-friend-status={participant.match_status}
@@ -429,21 +423,15 @@ for (let i = 0; i < participants.length; i++) {
 
                     <div class="mt-auto -mx-4 -mb-4 px-4 pb-4 space-y-2">
                       <button
-                        class={[
-                          "connect-btn w-full px-6 py-3 rounded-lg font-bold transition-all",
-                          {
-                            "bg-black text-white hover:opacity-90":
-                              !participant.match_status ||
-                              (participant.match_status === "pending" &&
-                                participant.match_initiator !==
-                                  currentUserId),
-                            "bg-blue-500 text-white":
-                              participant.match_status === "pending" &&
-                              participant.match_initiator === currentUserId,
-                            "bg-green-500 text-white":
-                              participant.match_status === "matched",
-                          },
-                        ]}
+                        class={`connect-btn w-full px-6 py-3 rounded-lg font-bold transition-all ${
+                          !participant.match_status || (participant.match_status === "pending" && participant.match_initiator !== currentUserId)
+                            ? "bg-black text-white hover:opacity-90"
+                            : participant.match_status === "pending" && participant.match_initiator === currentUserId
+                            ? "bg-blue-500 text-white"
+                            : participant.match_status === "matched"
+                            ? "bg-green-500 text-white"
+                            : ""
+                        }`}
                         data-user-id={participant.user_id}
                         data-event-id={event.event_id}
                         data-friend-status={participant.match_status}

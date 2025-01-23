@@ -56,40 +56,30 @@ const pusherCluster = import.meta.env.PUSHER_CLUSTER;
 
 <Layout
   title="Event Ability | Chat"
-  description="Chat with your friends from events"
-  classList="min-h-screen flex flex-col"
+  description={`Chat with ${user.first_name}`}
+  classList="h-full"
   pageTitle="Event Ability | Chat"
 >
-  <main class="bg-[#B8E8FF] flex-grow">
-    <div class="max-w-6xl mx-auto h-full">
-      <div class="h-full flex flex-col">
-        {/* Chat Header */}
-        <div class="bg-white border-b-2 border-black p-4">
-          <div class="flex items-center gap-4">
-            <a
-              href="/matches"
-              class="text-black hover:opacity-70 transition-opacity"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-              </svg>
-            </a>
-            <div class="flex-grow">
+  <main class="bg-[#B8E8FF] px-2 py-4 sm:px-6 sm:py-12">
+    <div class="max-w-full sm:max-w-4xl mx-auto">
+      <Card>
+        <div class="p-4 sm:p-6">
+          <!-- Removed connection status indicator -->
+          <!-- <div id="connectionStatus" class="text-sm text-gray-500 mb-2"></div> -->
+          <div class="flex items-center gap-4 mb-6 border-b pb-4">
+            <Image
+              src={String(profilePicture)}
+              alt={`${user.first_name}'s profile picture`}
+              class="w-12 h-12 rounded-full object-cover"
+              width={80}
+              height={80}
+            />
+            <div>
               <h2 class="text-xl font-bold">{user.first_name}, {user.age}</h2>
               <p class="text-sm text-gray-600">{user.region}</p>
             </div>
             <div class="ml-auto flex gap-2">
-              {/* Three-dot menu button */}
+              <!-- Three-dot menu button -->
               <div class="relative z-20">
                 <button
                   class="actions-menu-btn flex items-center justify-center p-2 text-4xl text-black-800 transition-all"
@@ -107,7 +97,7 @@ const pusherCluster = import.meta.env.PUSHER_CLUSTER;
                     data-user-id={user.user_id}
                     data-user-name={user.first_name}
                   >
-                    Remove Connection
+                    Delete Connection
                   </button>
                   <button
                     type="button"
@@ -121,121 +111,88 @@ const pusherCluster = import.meta.env.PUSHER_CLUSTER;
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Chat Messages */}
-        <div
-          id="messages"
-          class="flex-grow overflow-y-auto p-4 space-y-4"
-          style="height: calc(100vh - 200px);"
-        >
-          {
-            messages.map((message) => (
-              <div
-                class:list={[
-                  "flex",
-                  {
-                    "justify-end": message.sender_id === currentUserId,
-                    "justify-start": message.sender_id !== currentUserId,
-                  },
-                ]}
+          <div
+            id="chat-window"
+            class="h-[450px] overflow-y-auto mb-4 p-2 sm:p-4 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] relative"
+          >
+            <!-- Modified loading spinner without background -->
+            <div
+              id="loading-spinner"
+              class="absolute inset-0 flex items-center justify-center"
+            >
+              <svg
+                class="animate-spin h-12 w-12"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
               >
-                <div
-                  class:list={[
-                    "max-w-[70%] rounded-lg p-3",
-                    {
-                      "bg-[#FF5F1F] text-white":
-                        message.sender_id === currentUserId,
-                      "bg-white": message.sender_id !== currentUserId,
-                    },
-                  ]}
-                >
-                  <p class="break-words">{message.content}</p>
-                  <p
-                    class:list={[
-                      "text-xs mt-1",
-                      {
-                        "text-white/70": message.sender_id === currentUserId,
-                        "text-gray-500": message.sender_id !== currentUserId,
-                      },
-                    ]}
-                    data-date={message.sent_at}
-                  >
-                    Loading...
-                  </p>
-                </div>
-              </div>
-            ))
-          }
-        </div>
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+            </div>
+          </div>
 
-        {/* Message Input */}
-        <div class="bg-white border-t-2 border-black p-4">
-          <form id="messageForm" class="flex gap-2">
-            <input type="hidden" name="receiver_id" value={user.user_id} />
+          <div class="flex gap-2">
             <input
               type="text"
-              name="content"
-              class="flex-grow p-2 border-2 border-black rounded-lg"
-              placeholder="Type your message..."
-              required
+              id="message-input"
+              class="flex-1 rounded-lg border p-2"
+              placeholder="Type a message..."
             />
             <button
-              type="submit"
-              class="bg-black text-white px-6 py-2 rounded-lg hover:opacity-90 font-bold transition-all"
+              id="send-button"
+              class="bg-blue-500 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-600 transition-colors"
             >
               Send
             </button>
-          </form>
+          </div>
         </div>
-      </div>
+      </Card>
     </div>
   </main>
 
-  {/* Report Modal */}
+  <!-- Report Modal -->
   <div
     id="reportModal"
     class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center"
     style="display: none;"
   >
     <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+      <div
+        id="successMessage"
+        class="hidden mb-4 p-4 bg-green-100 text-green-700 rounded-lg"
+      >
+        Report submitted successfully
+      </div>
+
       <h2 class="text-xl font-bold mb-4">
-        Report <span id="reportUserName"></span>
+        Report User: <span id="reportUserName"></span>
       </h2>
-      <form id="reportForm">
+      <form id="reportForm" class="space-y-4">
         <input type="hidden" id="reportUserId" name="reportUserId" />
-        <div class="mb-4">
+        <div>
           <label
             for="reportReason"
             class="block text-sm font-medium text-gray-700 mb-1"
           >
-            Reason for Report
-          </label>
-          <select
-            id="reportReason"
-            name="reportReason"
-            class="w-full p-2 border border-gray-300 rounded-md"
-            required
-          >
-            <option value="">Select a reason</option>
-            <option value="harassment">Harassment</option>
-            <option value="inappropriate">Inappropriate Behavior</option>
-            <option value="spam">Spam</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-        <div class="mb-4">
-          <label
-            for="reportDetails"
-            class="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Additional Details
+            Reason for report
           </label>
           <textarea
-            id="reportDetails"
-            name="reportDetails"
-            rows="3"
-            class="w-full p-2 border border-gray-300 rounded-md"
+            id="reportReason"
+            name="reportReason"
+            rows="4"
+            class="w-full border rounded-lg p-2"
             required></textarea>
         </div>
         <div class="flex justify-end space-x-2">
@@ -257,7 +214,7 @@ const pusherCluster = import.meta.env.PUSHER_CLUSTER;
     </div>
   </div>
 
-  {/* Delete Match Modal */}
+  <!-- Delete Match Modal -->
   <div
     id="deleteMatchModal"
     class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center"
@@ -265,7 +222,7 @@ const pusherCluster = import.meta.env.PUSHER_CLUSTER;
   >
     <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
       <h2 class="text-xl font-bold mb-4">
-        Remove Connection with <span id="deleteMatchUserName"></span>?
+        Delete connection with <span id="deleteMatchUserName"></span>?
       </h2>
       <p class="text-gray-600 mb-4">
         This will remove the connection and chat history will no longer be
@@ -285,7 +242,7 @@ const pusherCluster = import.meta.env.PUSHER_CLUSTER;
           class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
           data-user-id=""
         >
-          Remove
+          Delete Connection
         </button>
       </div>
     </div>
@@ -302,60 +259,24 @@ const pusherCluster = import.meta.env.PUSHER_CLUSTER;
     pusherCluster,
   }}
 >
-  // Format dates
-  document.querySelectorAll("[data-date]").forEach((element) => {
-    if (element instanceof HTMLElement && element.dataset.date) {
-      try {
-        const date = new Date(element.dataset.date);
-        if (isNaN(date.getTime())) throw new Error("Invalid date");
-        element.textContent = new Intl.DateTimeFormat("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        }).format(date);
-      } catch (error) {
-        console.error("Error formatting date:", error);
-        element.textContent = element.dataset.date || "Invalid date";
-      }
-    }
-  });
-
-  // Scroll to bottom of messages
-  const messages = document.getElementById("messages");
-  if (messages) {
-    messages.scrollTop = messages.scrollHeight;
+  // Update the sanitize function to match sanitize.ts
+  function sanitizeInput(input) {
+    if (!input) return "";
+    const div = document.createElement("div");
+    div.textContent = input; // This will encode HTML entities
+    return div.textContent.trim(); // Return the sanitized and trimmed text
   }
 
-  // Handle message form submission
-  const messageForm = document.getElementById("messageForm");
-  messageForm?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const form = e.currentTarget;
-    const formData = new FormData(form);
+  const chatWindow = document.getElementById("chat-window");
+  const messageInput = document.getElementById("message-input");
+  const sendButton = document.getElementById("send-button");
 
-    try {
-      const response = await fetch("/api/message", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Failed to send message");
-
-      // Clear input and reload page to show new message
-      form.reset();
-      location.reload();
-    } catch (error) {
-      console.error("Message error:", error);
-      alert(error.message || "Failed to send message. Please try again.");
-    }
-  });
-
-  // Report functionality
+  // Add before the existing chat script
   const reportModal = document.getElementById("reportModal");
   const reportForm = document.getElementById("reportForm");
   const reportUserName = document.getElementById("reportUserName");
   const reportUserId = document.getElementById("reportUserId");
+  const successMessage = document.getElementById("successMessage");
 
   function showModal() {
     reportModal.style.display = "flex";
@@ -367,42 +288,499 @@ const pusherCluster = import.meta.env.PUSHER_CLUSTER;
     reportModal.classList.add("hidden");
   }
 
+  function showSuccessMessage() {
+    successMessage.classList.remove("hidden");
+    setTimeout(() => {
+      successMessage.classList.add("hidden");
+      hideModal();
+      reportForm.reset();
+    }, 2000);
+  }
+
   document.querySelectorAll(".report-btn").forEach((button) => {
     button.addEventListener("click", () => {
-      const userId = button.dataset.userId;
-      const userName = button.dataset.userName;
-      reportUserName.textContent = userName;
-      reportUserId.value = userId;
       showModal();
+      reportUserName.textContent = button.dataset.userName;
+      reportUserId.value = button.dataset.userId;
     });
+  });
+
+  cancelReport.addEventListener("click", () => {
+    hideModal();
+    reportForm.reset();
   });
 
   reportForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
 
     try {
+      const formData = new FormData(reportForm);
+      formData.append("reportedBy", currentUserId);
+
       const response = await fetch("/api/report", {
         method: "POST",
         body: formData,
       });
 
       if (!response.ok) throw new Error("Failed to submit report");
-      hideModal();
-      reportForm.reset();
+      showSuccessMessage();
     } catch (error) {
       console.error("Report error:", error);
-      alert(error.message || "Failed to submit report. Please try again.");
+      alert("Failed to submit report. Please try again.");
     }
   });
 
-  document.getElementById("cancelReport")?.addEventListener("click", hideModal);
+  reportModal.addEventListener("click", (e) => {
+    if (e.target === reportModal) {
+      hideModal();
+      reportForm.reset();
+    }
+  });
 
-  // Delete match functionality
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      hideModal();
+      reportForm.reset();
+    }
+  });
+
+  // Declare isTabActive to track tab visibility
+  let isTabActive = true;
+
+  // Handle tab visibility changes
+  document.addEventListener("visibilitychange", () => {
+    isTabActive = !document.hidden;
+  });
+
+  function scrollToBottom() {
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  }
+
+  function renderMessage(msg) {
+    // Clear the "no messages" indicator if it exists
+    const noMessagesIndicator = chatWindow.querySelector(
+      ".flex.items-center.justify-center.h-full",
+    );
+    if (noMessagesIndicator) {
+      chatWindow.innerHTML = "";
+    }
+
+    const messageDiv = document.createElement("div");
+    const isFromOther = msg.sender_id !== currentUserId;
+
+    messageDiv.className = `max-w-[80%] p-3 rounded-lg ${
+      !isFromOther ? "ml-auto bg-blue-500 text-white" : "bg-gray-100"
+    }`;
+    messageDiv.innerHTML = `
+          <p>${sanitizeInput(msg.content)}</p>
+          <div class="flex justify-between items-center mt-1">
+            <small class="text-xs opacity-75">${new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small>
+            ${
+              !isFromOther && msg.read_at
+                ? `<small class="text-xs opacity-75">Read ${new Date(msg.read_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small>`
+                : ""
+            }
+          </div>
+          `;
+    chatWindow.appendChild(messageDiv);
+    scrollToBottom();
+  }
+
+  // Initialize Pusher and other variables at the top level
+  let pusher;
+  let channel;
+  const MAX_RETRIES = 3;
+  let retryCount = 0;
+  let isConnected = false;
+
+  // Initialize chat system with retry mechanism
+  async function initializeChat() {
+    cleanup();
+
+    // Wait for DOM elements to be available
+    let setupSuccess = setupMessageHandlers();
+    if (!setupSuccess) {
+      // Retry setup after a short delay
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      setupSuccess = setupMessageHandlers();
+      if (!setupSuccess) {
+        console.error("Failed to setup message handlers");
+        return;
+      }
+    }
+
+    try {
+      if (!currentUserId || !slug) {
+        throw new Error("Missing required IDs");
+      }
+
+      // Initialize Pusher with connection monitoring
+      pusher = new window.Pusher(pusherKey, {
+        cluster: pusherCluster,
+        enabledTransports: ["ws", "wss"],
+      });
+
+      // Ensure IDs are properly encoded
+      const sanitizedCurrentUserId = encodeURIComponent(currentUserId.trim());
+      const sanitizedSlug = encodeURIComponent(slug.trim());
+      const room = [sanitizedCurrentUserId, sanitizedSlug].sort().join("-");
+
+      // Add connection event listeners
+      pusher.connection.bind("connected", () => {
+        console.log("Pusher connected");
+        isConnected = true;
+      });
+
+      pusher.connection.bind("disconnected", () => {
+        console.log("Pusher disconnected");
+        isConnected = false;
+      });
+
+      pusher.connection.bind("connecting", () => {
+        console.log("Pusher is connecting");
+        isConnected = false;
+      });
+
+      pusher.connection.bind("error", (err) => {
+        console.error("Pusher connection error:", err);
+        if (retryCount < MAX_RETRIES) {
+          retryCount++;
+          setTimeout(initializeChat, 1000 * retryCount);
+        }
+      });
+
+      // Subscribe to chat channel
+      channel = pusher.subscribe(room);
+
+      channel.bind("pusher:subscription_succeeded", () => {
+        console.log("Successfully subscribed to channel");
+        loadInitialMessages();
+      });
+
+      // Initialize unread messages count and store original title
+      let unreadMessages = 0;
+      const originalTitle = document.title;
+
+      // Modify the message handler to update unread count and title
+      channel.bind("message", (data) => {
+        if (data.type === "chat") {
+          renderMessage(data);
+          if (isTabActive) {
+            markMessagesAsRead();
+          } else {
+            unreadMessages += 1;
+            document.title = `New (${unreadMessages})`;
+          }
+        }
+      });
+
+      // Reset unread messages and title when the tab becomes active
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) {
+          isTabActive = true;
+          unreadMessages = 0;
+          document.title = originalTitle;
+        } else {
+          isTabActive = false;
+        }
+      });
+
+      // Initialize message input handlers
+      setupMessageHandlers();
+    } catch (error) {
+      console.error("Chat initialization error:", error);
+      if (retryCount < MAX_RETRIES) {
+        retryCount++;
+        setTimeout(initializeChat, 1000 * retryCount);
+      }
+    }
+  }
+
+  // Enhanced message loading with retry
+  async function loadInitialMessages(retryAttempt = 0) {
+    const spinner = document.getElementById("loading-spinner");
+    spinner.style.display = "flex"; // Show spinner
+
+    try {
+      const params = new URLSearchParams({
+        senderId: currentUserId,
+        receiverId: slug,
+        timestamp: new Date().getTime().toString(),
+      });
+
+      const response = await fetch(`/api/chat/getMessages?${params}`, {
+        headers: {
+          "Cache-Control": "no-cache",
+          Pragma: "no-cache",
+        },
+      });
+
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await response.json();
+
+      if (!data.messages) throw new Error("Invalid response format");
+
+      chatWindow.innerHTML = "";
+      if (data.messages.length === 0) {
+        chatWindow.innerHTML = `
+          <div class="flex items-center justify-center h-full">
+            <div class="text-center text-gray-500">
+              <svg class="mx-auto h-12 w-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              <p class="text-lg font-semibold">No messages yet</p>
+              <p class="text-sm mt-1">Start the conversation by sending a message!</p>
+            </div>
+          </div>`;
+      } else {
+        data.messages.forEach((msg) => {
+          msg.isHistory = true;
+          renderMessage(msg);
+        });
+      }
+
+      scrollToBottom();
+      await markMessagesAsRead();
+    } catch (error) {
+      console.error("Failed to load messages:", error);
+      if (retryAttempt < MAX_RETRIES) {
+        setTimeout(
+          () => loadInitialMessages(retryAttempt + 1),
+          1000 * (retryAttempt + 1),
+        );
+      } else {
+        chatWindow.innerHTML = `
+          <div class="text-center text-gray-500 py-4">
+            Failed to load messages. 
+            <button onclick="window.loadInitialMessages()" class="text-blue-500 underline">
+              Retry
+            </button>
+          </div>`;
+      }
+    } finally {
+      spinner.style.display = "none"; // Hide spinner when done
+    }
+  }
+
+  // Enhanced message sending with retry
+  async function sendMessage(retryAttempt = 0, content = "") {
+    if (!content || !isConnected) return;
+
+    try {
+      const formData = new FormData();
+      formData.append("senderId", currentUserId);
+      formData.append("receiverId", slug);
+      formData.append("content", content);
+
+      const response = await fetch("/api/chat/sendMessage", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error("Failed to send message");
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      if (retryAttempt < MAX_RETRIES) {
+        setTimeout(
+          () => sendMessage(retryAttempt + 1, content),
+          1000 * (retryAttempt + 1),
+        );
+      } else {
+        alert("Failed to send message. Please try again.");
+      }
+    }
+  }
+
+  // Modify setupMessageHandlers to prevent duplicate sends
+  function setupMessageHandlers() {
+    const sendButton = document.getElementById("send-button");
+    const messageInput = document.getElementById("message-input");
+
+    if (!sendButton || !messageInput) {
+      console.error("Required chat elements not found");
+      return false;
+    }
+
+    // Remove existing event listeners
+    const newSendButton = sendButton.cloneNode(true);
+    const newMessageInput = messageInput.cloneNode(true);
+
+    sendButton.parentNode?.replaceChild(newSendButton, sendButton);
+    messageInput.parentNode?.replaceChild(newMessageInput, messageInput);
+
+    // Add flag to track if message is being sent
+    let isSending = false;
+
+    const handleSendMessage = async () => {
+      if (isSending) return; // Prevent duplicate sends
+
+      const content = newMessageInput.value.trim();
+      if (content && isConnected) {
+        isSending = true;
+        newMessageInput.value = ""; // Clear input immediately
+        await sendMessage(0, content);
+        isSending = false;
+      }
+    };
+
+    // Add new event listeners
+    newSendButton.addEventListener("click", handleSendMessage);
+
+    newMessageInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleSendMessage();
+      }
+    });
+
+    return true;
+  }
+
+  // Cleanup function
+  function cleanup() {
+    if (channel) {
+      channel.unbind_all();
+    }
+    if (pusher) {
+      pusher.disconnect();
+    }
+    isConnected = false;
+    retryCount = 0;
+  }
+
+  // Initialize chat on page load and navigation
+  function initializeChatAndHandlers() {
+    // Ensure DOM is ready
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", initializeChat);
+    } else {
+      initializeChat();
+    }
+  }
+
+  // Single event listener for page load
+  document.addEventListener("astro:page-load", initializeChatAndHandlers, {
+    once: false,
+  });
+
+  // Initial load
+  if (document.readyState === "complete") {
+    initializeChatAndHandlers();
+  } else {
+    window.addEventListener("load", initializeChatAndHandlers);
+  }
+
+  // Update markMessagesAsRead function to also update chat_views
+  async function markMessagesAsRead() {
+    try {
+      const formData = new FormData();
+      formData.append("senderId", slug);
+      formData.append("receiverId", currentUserId);
+
+      // First update read_at timestamps
+      await fetch("/api/chat/markMessagesRead", {
+        method: "POST",
+        body: formData,
+      });
+
+      // Force reload chat list if we're marking messages as read
+      // This ensures the unread count updates immediately
+      if (window.opener) {
+        window.opener.postMessage("refreshChats", "*");
+      }
+    } catch (error) {
+      console.error("Failed to mark messages as read:", error);
+    }
+  }
+
+  // Call markMessagesAsRead more frequently
+  // On initial load
+  window.addEventListener("load", markMessagesAsRead);
+
+  // When window gains focus
+  window.addEventListener("focus", () => {
+    if (isTabActive) {
+      markMessagesAsRead();
+    }
+  });
+
+  // Add message listener to chats page
+  if (window.opener === null) {
+    window.addEventListener("message", (event) => {
+      if (event.data === "refreshChats") {
+        window.location.reload();
+      }
+    });
+  }
+
+  // Define loadInitialMessages in global scope
+  async function loadInitialMessages(retryAttempt = 0) {
+    try {
+      const params = new URLSearchParams({
+        senderId: currentUserId,
+        receiverId: slug,
+        timestamp: new Date().getTime().toString(), // Prevent caching
+      });
+
+      const response = await fetch(`/api/chat/getMessages?${params}`, {
+        headers: {
+          "Cache-Control": "no-cache",
+          Pragma: "no-cache",
+        },
+      });
+
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await response.json();
+
+      if (!data.messages) throw new Error("Invalid response format");
+
+      chatWindow.innerHTML = "";
+      if (data.messages.length === 0) {
+        chatWindow.innerHTML = `
+          <div class="flex items-center justify-center h-full">
+            <div class="text-center text-gray-500">
+              <svg class="mx-auto h-12 w-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              <p class="text-lg font-semibold">No messages yet</p>
+              <p class="text-sm mt-1">Start the conversation by sending a message!</p>
+            </div>
+          </div>`;
+      } else {
+        data.messages.forEach((msg) => {
+          msg.isHistory = true;
+          renderMessage(msg);
+        });
+      }
+
+      scrollToBottom();
+      await markMessagesAsRead(); // Mark messages as read after loading
+    } catch (error) {
+      console.error("Failed to load messages:", error);
+      if (retryAttempt < MAX_RETRIES) {
+        setTimeout(
+          () => loadInitialMessages(retryAttempt + 1),
+          1000 * (retryAttempt + 1),
+        );
+      } else {
+        chatWindow.innerHTML = `
+                <div class="text-center text-gray-500 py-4">
+                  Failed to load messages. 
+                  <button onclick="window.loadInitialMessages()" class="text-blue-500 underline">
+                    Retry
+                  </button>
+                </div>`;
+      }
+    }
+  }
+
+  // Add delete match functionality
   const deleteMatchModal = document.getElementById("deleteMatchModal");
   const deleteMatchUserName = document.getElementById("deleteMatchUserName");
-  const confirmDelete = document.getElementById("confirmDelete");
   const cancelDelete = document.getElementById("cancelDelete");
+  const confirmDelete = document.getElementById("confirmDelete");
 
   function showDeleteModal() {
     deleteMatchModal.style.display = "flex";
@@ -438,7 +816,7 @@ const pusherCluster = import.meta.env.PUSHER_CLUSTER;
         body: formData,
       });
 
-      const data = await response.json();
+      const data = await response.json(); // Parse the response first
 
       if (!response.ok) {
         throw new Error(data.error || "Failed to delete match");
@@ -504,25 +882,16 @@ const pusherCluster = import.meta.env.PUSHER_CLUSTER;
     }
   });
 
-  // Close menus on escape key
+  // Close modals and menus on escape key
   window.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       document.querySelectorAll(".actions-menu").forEach((menu) => {
         menu.classList.add("hidden");
       });
+      hideDeleteModal();
+      hideModal();
     }
   });
 
-  // Mark messages as read
-  fetch("/api/markMessagesAsRead", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      sender_id: slug,
-    }),
-  }).catch((error) => {
-    console.error("Error marking messages as read:", error);
-  });
+  // ...rest of your existing code...
 </script>
