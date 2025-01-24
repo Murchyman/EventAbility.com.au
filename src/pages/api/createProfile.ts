@@ -111,7 +111,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     );
   } catch (error) {
     console.error("Profile creation error:", error);
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
+    return new Response(JSON.stringify({ error: "Internal server error", details: error instanceof Error ? error.message : "Unknown error" }), {
       status: 500,
     });
   }
