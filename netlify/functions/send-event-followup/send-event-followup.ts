@@ -98,8 +98,8 @@ export const handler: Handler = async (event, context) => {
               Messages: [
                 {
                   From: {
-                    Email: "noreply@socialspot.com.au",
-                    Name: "SocialSpot",
+                    Email: "noreply@eventability.com.au",
+                    Name: "Event Ability",
                   },
                   To: [{ Email: participant.email }],
                   Subject: `Reconnect with people you met at ${participant.event_name}!`,

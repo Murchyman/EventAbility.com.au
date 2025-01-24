@@ -34,8 +34,8 @@ export const POST: APIRoute = async ({ request }) => {
         Messages: [
           {
             From: {
-              Email: "noreply@socialspot.com.au",
-              Name: "SocialSpot",
+              Email: "noreply@eventability.com.au",
+              Name: "Event Ability",
             },
             To: [
               {

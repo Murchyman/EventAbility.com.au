@@ -91,8 +91,8 @@ export const handler: Handler = async (event, context) => {
               Messages: [
                 {
                   From: {
-                    Email: "noreply@socialspot.com.au",
-                    Name: "SocialSpot",
+                    Email: "noreply@eventability.com.au",
+                    Name: "Event Ability",
                   },
                   To: [{ Email: participant.email }],
                   Subject: `Reminder: ${participant.event_name} is tomorrow!`,
@@ -115,7 +115,7 @@ export const handler: Handler = async (event, context) => {
                                   </div>
                                   <p style="margin: 0 0 30px; font-size: 16px; line-height: 1.5; color: black;">We're looking forward to seeing you there!</p>
                                   <div style="text-align: center;">
-                                    <a href="https://socialspot.com.au/events/${participant.event_id}" 
+                                    <a href="https://eventability.com.au/events/${participant.event_id}" 
                                        style="display: inline-block; background-color: black; color: white; padding: 24px 40px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 16px;">
                                       View Event Details
                                     </a>
