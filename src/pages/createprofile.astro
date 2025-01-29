@@ -992,19 +992,45 @@ const steps = [
 
         let profileData;
         try {
-          profileData = await profileResponse.json();
-        } catch (jsonError) {
+          const responseText = await profileResponse.text();
+          console.log("Raw server response:", responseText);
+
+          try {
+            profileData = JSON.parse(responseText);
+          } catch (parseError) {
+            console.error("JSON parse error:", parseError);
+            console.error("Response status:", profileResponse.status);
+            console.error(
+              "Response headers:",
+              Object.fromEntries(profileResponse.headers.entries()),
+            );
+            throw new Error(
+              `Server returned an invalid response (Status: ${profileResponse.status}). Please try again later.`,
+            );
+          }
+        } catch (error: unknown) {
+          console.error("Response error:", error);
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : "Failed to process response";
           throw new Error(
-            "Server returned an invalid response. Please try again later.",
+            `Server error: ${errorMessage}. Please try again later.`,
           );
         }
 
         if (!profileResponse.ok) {
           const errorMessage =
-            profileData.error ||
-            (profileData.details
+            profileData?.error ||
+            (profileData?.details
               ? `${profileData.error}: ${profileData.details}`
               : "Failed to create profile");
+          console.error("Profile creation failed:", {
+            status: profileResponse.status,
+            error: errorMessage,
+            details: profileData?.details,
+            errorType: profileData?.errorType,
+          });
           throw new Error(errorMessage);
         }
 

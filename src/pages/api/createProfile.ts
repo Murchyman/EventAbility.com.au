@@ -12,8 +12,10 @@ const isValidImage = (file: File) => {
 
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
+    console.log("Starting profile creation process...");
     const user = locals.user;
     if (!user) {
+      console.log("Unauthorized: No user found in locals");
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: {
@@ -22,6 +24,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
     }
 
+    console.log("Processing form data...");
     const formData = await request.formData();
     const firstName = sanitizeInput(formData.get("first_name") as string).trim();
     const age = parseInt(sanitizeInput(formData.get("age") as string));
@@ -29,11 +32,24 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const photo = formData.get("profile_photo") as File;
     const instagramHandle = sanitizeInput(formData.get("instagram_handle") as string)?.trim() || null;
 
+    // Add validation logging
+    console.log("Validating inputs...", {
+      hasFirstName: !!firstName,
+      hasAge: !!age,
+      hasInterests: !!interests,
+      hasPhoto: !!photo
+    });
+
     // Validate inputs
     if (!firstName || !age || !interests) {
       return new Response(
         JSON.stringify({ error: "All fields are required" }),
-        { status: 400 }
+        { 
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
       );
     }
     if(firstName.length > 25){
@@ -84,15 +100,20 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
+    console.log("Inserting profile into database...");
     const result = await turso.execute({
       sql: `INSERT INTO profile (user_id, first_name, age, interests, instagram_handle) 
             VALUES (?, ?, ?, ?, ?)`,
       args: [user.id, firstName, age, interests, instagramHandle || null],
     });
+    console.log("Database insert result:", result);
 
     // Wrap image processing in try-catch to handle sharp errors specifically
     try {
+      console.log("Starting image processing...");
       const buffer = Buffer.from(await photo.arrayBuffer());
+      console.log("Image buffer created, size:", buffer.length);
+      
       const processedImageBuffer = await sharp(buffer)
         .resize(800, 800, {
           fit: "inside",
@@ -103,10 +124,29 @@ export const POST: APIRoute = async ({ request, locals }) => {
           mozjpeg: true,
         })
         .toBuffer();
+      console.log("Image processed successfully, new size:", processedImageBuffer.length);
 
+      console.log("Uploading image to S3...");
       await uploadFile(processedImageBuffer, `${user.id}.jpg`, "profile-pictures");
+      console.log("Image upload complete");
     } catch (imageError) {
-      console.error("Image processing error:", imageError);
+      console.error("Image processing error:", {
+        error: imageError,
+        message: imageError instanceof Error ? imageError.message : "Unknown error",
+        stack: imageError instanceof Error ? imageError.stack : undefined
+      });
+      
+      // Attempt to rollback the profile creation since image processing failed
+      try {
+        await turso.execute({
+          sql: "DELETE FROM profile WHERE user_id = ?",
+          args: [user.id],
+        });
+        console.log("Profile creation rolled back due to image processing error");
+      } catch (rollbackError) {
+        console.error("Failed to rollback profile creation:", rollbackError);
+      }
+
       return new Response(
         JSON.stringify({ 
           error: "Failed to process image", 
@@ -120,6 +160,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
+    console.log("Profile creation completed successfully");
     // On successful profile creation
     return new Response(
       JSON.stringify({ message: "Profile created successfully" }),
@@ -131,7 +172,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
       }
     );
   } catch (error) {
-    console.error("Profile creation error:", error);
+    console.error("Profile creation error:", {
+      error,
+      message: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+      type: error instanceof Error ? error.constructor.name : typeof error
+    });
+    
     // Ensure we return a properly formatted error response
     return new Response(
       JSON.stringify({ 
