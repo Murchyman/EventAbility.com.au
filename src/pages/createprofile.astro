@@ -990,10 +990,22 @@ const steps = [
           body: formData,
         });
 
-        const profileData = await profileResponse.json();
+        let profileData;
+        try {
+          profileData = await profileResponse.json();
+        } catch (jsonError) {
+          throw new Error(
+            "Server returned an invalid response. Please try again later.",
+          );
+        }
 
         if (!profileResponse.ok) {
-          throw new Error(profileData.error || "Failed to create profile");
+          const errorMessage =
+            profileData.error ||
+            (profileData.details
+              ? `${profileData.error}: ${profileData.details}`
+              : "Failed to create profile");
+          throw new Error(errorMessage);
         }
 
         // Get event ID from URL params for redirect
@@ -1008,20 +1020,21 @@ const steps = [
         // Show error message
         if (errorMessageElement) {
           errorMessageElement.classList.remove("hidden");
-          errorMessageElement.querySelector("span")!.textContent =
-            error.message;
+          const errorMessage =
+            error.message || "An unexpected error occurred. Please try again.";
+          errorMessageElement.querySelector("span")!.textContent = errorMessage;
+
+          // Scroll error into view with some offset to ensure it's visible
+          errorMessageElement.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
         }
 
         // Reset button state
         submitButton.disabled = false;
         submitText.textContent = "Create Account";
         loadingSpinner.classList.add("hidden");
-
-        // Scroll error into view
-        errorMessageElement?.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
       }
     });
 
