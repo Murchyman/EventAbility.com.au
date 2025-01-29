@@ -73,13 +73,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
   
   // Add security headers to the response
-  const headers = new Headers(response.headers);
-  Object.entries(securityHeaders).forEach(([key, value]) => {
-    headers.set(key, value);
-  });
+  // const headers = new Headers(response.headers);
+  // Object.entries(securityHeaders).forEach(([key, value]) => {
+  //   headers.set(key, value);
+  // });
 
   return new Response(response.body, {
     status: response.status,
-    headers,
+    // headers,
   });
 });
