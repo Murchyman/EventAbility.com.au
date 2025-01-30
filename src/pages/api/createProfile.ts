@@ -11,75 +11,97 @@ const isValidImage = (file: File) => {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
+  // Wrap everything in a top-level try-catch to ensure we never send an empty response
   try {
-    const user = locals.user;
-    if (!user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-      });
-    }
+    return await (async () => {
+      try {
+        console.log("Starting profile creation process...");
+        const user = locals.user;
+        if (!user) {
+          console.log("Unauthorized: No user found in locals");
+          return new Response(JSON.stringify({ error: "Unauthorized" }), {
+            status: 401,
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+        }
 
-    const formData = await request.formData();
-    const firstName = sanitizeInput(formData.get("first_name") as string).trim();
-    const age = parseInt(sanitizeInput(formData.get("age") as string));
-    const interests = sanitizeInput(formData.get("interests") as string);
-    const photo = formData.get("profile_photo") as File;
-    const instagramHandle = sanitizeInput(formData.get("instagram_handle") as string)?.trim() || null;
+        console.log("Processing form data...");
+        const formData = await request.formData();
+        const firstName = sanitizeInput(formData.get("first_name") as string).trim();
+        const age = parseInt(sanitizeInput(formData.get("age") as string));
+        const interests = sanitizeInput(formData.get("interests") as string);
+        const photo = formData.get("profile_photo") as File;
+        const instagramHandle = sanitizeInput(formData.get("instagram_handle") as string)?.trim() || null;
 
-    // Validate inputs
-    if (!firstName || !age || !interests) {
-      return new Response(
-        JSON.stringify({ error: "All fields are required" }),
-        { status: 400 }
-      );
-    }
-    if(firstName.length > 25){
-      return new Response(
-        JSON.stringify({ error: "First name must be 25 characters or less" }),
-        { status: 400 }
-      );
-    }
+        // Add validation logging
+        console.log("Validating inputs...", {
+          hasFirstName: !!firstName,
+          hasAge: !!age,
+          hasInterests: !!interests,
+          hasPhoto: !!photo
+        });
 
-    // Validate Instagram handle format if provided
-    if (instagramHandle) {
-      const instagramRegex = /^[a-zA-Z0-9._]{1,30}$/;
-      if (!instagramRegex.test(instagramHandle)) {
-        return new Response(
-          JSON.stringify({ error: "Invalid Instagram handle format. Only letters, numbers, dots and underscores are allowed." }),
-          { status: 400 }
-        );
-      }
-    }
+        // Validate inputs
+        if (!firstName || !age || !interests) {
+          return new Response(
+            JSON.stringify({ error: "All fields are required" }),
+            { 
+              status: 400,
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+        }
+        if(firstName.length > 25){
+          return new Response(
+            JSON.stringify({ error: "First name must be 25 characters or less" }),
+            { status: 400 }
+          );
+        }
 
-    // Server-side age validation
-    if (isNaN(age) || age < 18 || age > 120) {
-      return new Response(
-        JSON.stringify({ error: "Age must be between 18 and 120" }),
-        { status: 400 }
-      );
-    }
+        // Validate Instagram handle format if provided
+        if (instagramHandle) {
+          const instagramRegex = /^[a-zA-Z0-9._]{1,30}$/;
+          if (!instagramRegex.test(instagramHandle)) {
+            return new Response(
+              JSON.stringify({ error: "Invalid Instagram handle format. Only letters, numbers, dots and underscores are allowed." }),
+              { status: 400 }
+            );
+          }
+        }
 
-    // Validate interests is a valid JSON array
-    try {
-      JSON.parse(interests);
-    } catch (e) {
-      return new Response(
-        JSON.stringify({ error: "Invalid interests format" }),
-        { status: 400 }
-      );
-    }
+        // Server-side age validation
+        if (isNaN(age) || age < 18 || age > 120) {
+          return new Response(
+            JSON.stringify({ error: "Age must be between 18 and 120" }),
+            { status: 400 }
+          );
+        }
 
-    // Validate photo
-    if (!photo || !isValidImage(photo)) {
-      return new Response(
-        JSON.stringify({ 
-          error: photo && photo.size > 20 * 1024 * 1024 
-            ? "Image file size must be less than 20MB" 
-            : "Please upload a valid image file" 
-        }),
-        { status: 400 }
-      );
-    }
+        // Validate interests is a valid JSON array
+        try {
+          JSON.parse(interests);
+        } catch (e) {
+          return new Response(
+            JSON.stringify({ error: "Invalid interests format" }),
+            { status: 400 }
+          );
+        }
+
+        // Validate photo
+        if (!photo || !isValidImage(photo)) {
+          return new Response(
+            JSON.stringify({ 
+              error: photo && photo.size > 20 * 1024 * 1024 
+                ? "Image file size must be less than 20MB" 
+                : "Please upload a valid image file" 
+            }),
+            { status: 400 }
+          );
+        }
 
     const result = await turso.execute({
       sql: `INSERT INTO profile (user_id, first_name, age, interests, instagram_handle) 
