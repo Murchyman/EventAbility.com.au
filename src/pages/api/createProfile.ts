@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { uploadFile } from "src/lib/s3";
 import { turso } from "src/lib/turso";
-import sharp from "sharp";
+import Jimp from "jimp";
 import { sanitizeInput } from "src/lib/sanitize";
 
 const isValidImage = (file: File) => {
@@ -103,112 +103,31 @@ export const POST: APIRoute = async ({ request, locals }) => {
           );
         }
 
-        console.log("Inserting profile into database...");
-        const result = await turso.execute({
-          sql: `INSERT INTO profile (user_id, first_name, age, interests, instagram_handle) 
-                VALUES (?, ?, ?, ?, ?)`,
-          args: [user.id, firstName, age, interests, instagramHandle || null],
-        });
-        console.log("Database insert result:", result);
+    const result = await turso.execute({
+      sql: `INSERT INTO profile (user_id, first_name, age, interests, instagram_handle) 
+            VALUES (?, ?, ?, ?, ?)`,
+      args: [user.id, firstName, age, interests, instagramHandle || null],
+    });
+    const buffer = Buffer.from(await photo.arrayBuffer());
 
-        // Wrap image processing in try-catch to handle sharp errors specifically
-        try {
-          console.log("Starting image processing...");
-          const buffer = Buffer.from(await photo.arrayBuffer());
-          console.log("Image buffer created, size:", buffer.length);
-          
-          const processedImageBuffer = await sharp(buffer)
-            .resize(800, 800, {
-              fit: "inside",
-              withoutEnlargement: true,
-            })
-            .jpeg({
-              quality: 95,
-              mozjpeg: true,
-            })
-            .toBuffer();
-          console.log("Image processed successfully, new size:", processedImageBuffer.length);
+    // Compress and resize the image
+    const image = await Jimp.read(buffer);
+    const processedImageBuffer = await image
+      .scaleToFit(800, 800)
+      .quality(80)
+      .getBufferAsync(Jimp.MIME_JPEG);
 
-          console.log("Uploading image to S3...");
-          await uploadFile(processedImageBuffer, `${user.id}.jpg`, "profile-pictures");
-          console.log("Image upload complete");
-        } catch (imageError) {
-          console.error("Image processing error:", {
-            error: imageError,
-            message: imageError instanceof Error ? imageError.message : "Unknown error",
-            stack: imageError instanceof Error ? imageError.stack : undefined
-          });
-          
-          // Attempt to rollback the profile creation since image processing failed
-          try {
-            await turso.execute({
-              sql: "DELETE FROM profile WHERE user_id = ?",
-              args: [user.id],
-            });
-            console.log("Profile creation rolled back due to image processing error");
-          } catch (rollbackError) {
-            console.error("Failed to rollback profile creation:", rollbackError);
-          }
+    uploadFile(processedImageBuffer, `${user.id}.jpg`, "profile-pictures");
 
-          return new Response(
-            JSON.stringify({ 
-              error: "Failed to process image", 
-              details: imageError instanceof Error ? imageError.message : "Unknown image processing error" 
-            }), {
-              status: 500,
-              headers: {
-                'Content-Type': 'application/json'
-              }
-            }
-          );
-        }
-
-        console.log("Profile creation completed successfully");
-        // On successful profile creation
-        return new Response(
-          JSON.stringify({ message: "Profile created successfully" }),
-          { 
-            status: 200,
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-      } catch (error) {
-        console.error("Profile creation error:", {
-          error,
-          message: error instanceof Error ? error.message : "Unknown error",
-          stack: error instanceof Error ? error.stack : undefined,
-          type: error instanceof Error ? error.constructor.name : typeof error
-        });
-        
-        return new Response(
-          JSON.stringify({ 
-            error: "Internal server error", 
-            details: error instanceof Error ? error.message : "Unknown error",
-            errorType: error instanceof Error ? error.constructor.name : "Unknown"
-          }), {
-            status: 500,
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-      }
-    })();
-  } catch (finalError) {
-    // Last resort error handling to ensure we never send an empty response
-    console.error("Critical error in profile creation:", finalError);
+    // On successful profile creation
     return new Response(
-      JSON.stringify({
-        error: "Critical server error",
-        details: "An unexpected error occurred while processing your request"
-      }), {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
+      JSON.stringify({ message: "Profile created successfully" }),
+      { status: 200 }
     );
+  } catch (error) {
+    console.error("Profile creation error:", error);
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
+      status: 500,
+    });
   }
 };

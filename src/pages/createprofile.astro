@@ -990,48 +990,10 @@ const steps = [
           body: formData,
         });
 
-        let profileData;
-        try {
-          const responseText = await profileResponse.text();
-          console.log("Raw server response:", responseText);
-
-          try {
-            profileData = JSON.parse(responseText);
-          } catch (parseError) {
-            console.error("JSON parse error:", parseError);
-            console.error("Response status:", profileResponse.status);
-            console.error(
-              "Response headers:",
-              Object.fromEntries(profileResponse.headers.entries()),
-            );
-            throw new Error(
-              `Server returned an invalid response (Status: ${profileResponse.status}). Please try again later.`,
-            );
-          }
-        } catch (error: unknown) {
-          console.error("Response error:", error);
-          const errorMessage =
-            error instanceof Error
-              ? error.message
-              : "Failed to process response";
-          throw new Error(
-            `Server error: ${errorMessage}. Please try again later.`,
-          );
-        }
+        const profileData = await profileResponse.json();
 
         if (!profileResponse.ok) {
-          const errorMessage =
-            profileData?.error ||
-            (profileData?.details
-              ? `${profileData.error}: ${profileData.details}`
-              : "Failed to create profile");
-          console.error("Profile creation failed:", {
-            status: profileResponse.status,
-            error: errorMessage,
-            details: profileData?.details,
-            errorType: profileData?.errorType,
-          });
-          throw new Error(errorMessage);
+          throw new Error(profileData.error || "Failed to create profile");
         }
 
         // Get event ID from URL params for redirect
@@ -1046,21 +1008,20 @@ const steps = [
         // Show error message
         if (errorMessageElement) {
           errorMessageElement.classList.remove("hidden");
-          const errorMessage =
-            error.message || "An unexpected error occurred. Please try again.";
-          errorMessageElement.querySelector("span")!.textContent = errorMessage;
-
-          // Scroll error into view with some offset to ensure it's visible
-          errorMessageElement.scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-          });
+          errorMessageElement.querySelector("span")!.textContent =
+            error.message;
         }
 
         // Reset button state
         submitButton.disabled = false;
         submitText.textContent = "Create Account";
         loadingSpinner.classList.add("hidden");
+
+        // Scroll error into view
+        errorMessageElement?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
       }
     });
 
