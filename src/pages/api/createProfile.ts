@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { uploadFile } from "src/lib/s3";
 import { turso } from "src/lib/turso";
-import sharp from "sharp";
+import Jimp from "jimp";
 import { sanitizeInput } from "src/lib/sanitize";
 
 const isValidImage = (file: File) => {
@@ -89,18 +89,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const buffer = Buffer.from(await photo.arrayBuffer());
 
     // Compress and resize the image
-    const processedImageBuffer = await sharp(buffer)
-      .resize(800, 800, {
-        // Resize to reasonable dimensions
-        fit: "inside",
-        withoutEnlargement: true,
-      })
-      .jpeg({
-        // Convert to JPEG and compress
-        quality: 95,
-        mozjpeg: true,
-      })
-      .toBuffer();
+    const image = await Jimp.read(buffer);
+    const processedImageBuffer = await image
+      .scaleToFit(800, 800)
+      .quality(80)
+      .getBufferAsync(Jimp.MIME_JPEG);
 
     uploadFile(processedImageBuffer, `${user.id}.jpg`, "profile-pictures");
 
