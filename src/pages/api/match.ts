@@ -115,7 +115,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
                 <p><strong>Event:</strong> ${event.name}</p>
                 <p>Someone you met at the event wants to stay in touch! Visit your connections page to start chatting and plan future meetups.</p>
                 <div style="text-align: center; margin-top: 20px;">
-                  <a href="https://eventability.com.au/matches" 
+                  <a href="https://eventability.com.au/friends" 
                      style="display: inline-block; background-color: black; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
                     View Connections
                   </a>
