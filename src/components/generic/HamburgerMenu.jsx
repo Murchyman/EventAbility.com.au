@@ -147,12 +147,12 @@ const HamburgerMenu = () => {
                                     My Profile
                                 </a>
                                 <a
-                                    href="/matches"
+                                    href="/friends"
                                     style={menuItemStyle}
                                     onMouseOver={e => e.target.style.backgroundColor = '#f0f0f0'}
                                     onMouseOut={e => e.target.style.backgroundColor = 'transparent'}
                                 >
-                                    Matches
+                                    Friends
                                 </a>
 
                                 <a

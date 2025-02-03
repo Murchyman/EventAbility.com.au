@@ -186,12 +186,10 @@ const LoginButton = () => {
                       My Profile
                     </a>
                     <a
-                      href="/matches"
-                      style={menuItemStyle}
-                      onMouseOver={e => e.target.style.backgroundColor = '#f0f0f0'}
-                      onMouseOut={e => e.target.style.backgroundColor = 'transparent'}
+                      href="/friends"
+                      class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
-                      Matches
+                      Friends
                     </a>
                     <a
                       href="/bookings"

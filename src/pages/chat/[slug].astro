@@ -21,9 +21,9 @@ const matchExists = await turso.execute({
   args: [currentUserId, slug, slug, currentUserId],
 });
 
-// If no active match exists, redirect to matches page
+// If no active match exists, redirect to friends page
 if (matchExists.rows.length === 0) {
-  return Astro.redirect("/matches");
+  return Astro.redirect("/friends");
 }
 
 // Get chat partner's profile
@@ -38,7 +38,7 @@ const userData = await turso.execute({
 
 const user = userData.rows[0];
 if (!user) {
-  return Astro.redirect("/matches");
+  return Astro.redirect("/friends");
 }
 
 // Get user's profile picture
@@ -823,8 +823,8 @@ const pusherCluster = import.meta.env.PUSHER_CLUSTER;
       }
 
       if (data.status === "success") {
-        // Redirect to matches page after successful deletion
-        window.location.href = "/matches";
+        // Redirect to friends page after successful deletion
+        window.location.href = "/friends";
       } else {
         throw new Error(data.message || "Failed to delete match");
       }
