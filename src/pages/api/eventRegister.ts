@@ -199,14 +199,17 @@ export async function POST(context: APIContext): Promise<Response> {
         // Don't throw, just log and continue
       } else {
         const eventStartTime = new Date(event.start_time as string);
-        const formattedStartTime = eventStartTime.toLocaleString('en-US', {
+        const eventTimeZone: string = typeof event.timezone === 'string' ? event.timezone : 'UTC';
+        const options: Intl.DateTimeFormatOptions = {
+          timeZone: eventTimeZone,
           weekday: 'long',
           year: 'numeric',
           month: 'long',
           day: 'numeric',
           hour: '2-digit',
           minute: '2-digit'
-        });
+        };
+        const formattedStartTime = eventStartTime.toLocaleString('en-US', options);
 
         // Initialize Mailjet and send email without awaiting
         const mailjet = new Mailjet({
