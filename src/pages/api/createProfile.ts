@@ -30,7 +30,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const age = parseInt(sanitizeInput(formData.get("age") as string));
     const interests = sanitizeInput(formData.get("interests") as string);
     const photo = formData.get("profile_photo") as File;
-    const instagramHandle = sanitizeInput(formData.get("instagram_handle") as string)?.trim() || null;
 
     // Add validation logging
     console.log("Validating inputs...", {
@@ -57,17 +56,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
         JSON.stringify({ error: "First name must be 25 characters or less" }),
         { status: 400 }
       );
-    }
-
-    // Validate Instagram handle format if provided
-    if (instagramHandle) {
-      const instagramRegex = /^[a-zA-Z0-9._]{1,30}$/;
-      if (!instagramRegex.test(instagramHandle)) {
-        return new Response(
-          JSON.stringify({ error: "Invalid Instagram handle format. Only letters, numbers, dots and underscores are allowed." }),
-          { status: 400 }
-        );
-      }
     }
 
     // Server-side age validation
@@ -101,9 +89,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     const result = await turso.execute({
-      sql: `INSERT INTO profile (user_id, first_name, age, interests, instagram_handle) 
-            VALUES (?, ?, ?, ?, ?)`,
-      args: [user.id, firstName, age, interests, instagramHandle || null],
+      sql: `INSERT INTO profile (user_id, first_name, age, interests) 
+            VALUES (?, ?, ?, ?)`,
+      args: [user.id, firstName, age, interests],
     });
     const buffer = Buffer.from(await photo.arrayBuffer());
 

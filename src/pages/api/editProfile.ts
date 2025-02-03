@@ -24,7 +24,6 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     const age = parseInt(sanitizeInput(formData.get("age") as string));
     const interests = sanitizeInput(formData.get("interests") as string);
     const photo = formData.get("profile_photo") as File;
-    const instagramHandle = sanitizeInput(formData.get("instagram_handle") as string)?.trim() || null;
 
     // Validate required inputs
     if (!firstName || !interests || !age) {
@@ -40,17 +39,6 @@ export const PUT: APIRoute = async ({ request, locals }) => {
         JSON.stringify({ error: "First name must be 25 characters or less" }),
         { status: 400 }
       );
-    }
-
-    // Validate Instagram handle format if provided
-    if (instagramHandle) {
-      const instagramRegex = /^[a-zA-Z0-9._]{1,30}$/;
-      if (!instagramRegex.test(instagramHandle)) {
-        return new Response(
-          JSON.stringify({ error: "Invalid Instagram handle format. Only letters, numbers, dots and underscores are allowed." }),
-          { status: 400 }
-        );
-      }
     }
 
     // Server-side age validation
@@ -76,10 +64,9 @@ export const PUT: APIRoute = async ({ request, locals }) => {
       sql: `UPDATE profile 
             SET first_name = ?, 
                 interests = ?,
-                age = ?,
-                instagram_handle = ?
+                age = ?
             WHERE user_id = ?`,
-      args: [firstName, interests, age, instagramHandle || null, user.id],
+      args: [firstName, interests, age, user.id],
     });
 
     // Upload new photo if provided
