@@ -206,30 +206,6 @@ const profilePhoto = await getSignedUrlForFile(user.id, "profile-pictures");
                 <div id="age-error" class="hidden text-red-600 text-sm">
                   Age must be between 18 and 120.
                 </div>
-
-                <!-- Add Instagram Handle Field -->
-                <label class="flex flex-col gap-2">
-                  <span class="text-lg poppins"
-                    >Instagram Handle (optional)</span
-                  >
-                  <div class="relative">
-                    <span
-                      class="absolute left-3 top-1/2 -translate-y-1/2 text-[#E1306C]"
-                      >@</span
-                    >
-                    <input
-                      type="text"
-                      name="instagram_handle"
-                      value={profile.instagram_handle?.toString() || ""}
-                      pattern="^[a-zA-Z0-9._]{1,30}$"
-                      class="p-2 pl-8 border-2 border-black rounded w-full"
-                      title="Please enter a valid Instagram handle without the @ symbol"
-                    />
-                  </div>
-                  <p class="text-xs text-gray-500">
-                    Enter without the @ symbol
-                  </p>
-                </label>
               </div>
 
               <!-- Interests Section -->
